@@ -1,0 +1,1564 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Flowr — Budget</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+–bg: #f0efec;
+–surface: #ffffff;
+–dark: #0f172a;
+–ink: #1e293b;
+–muted: #64748b;
+–faint: #94a3b8;
+–border: #e2e8f0;
+–border2: #e8e8e4;
+–income: #16a34a;
+–bill: #ea580c;
+–card-color: #4f46e5;
+–buffer: #b45309;
+–pass: #94a3b8;
+–danger: #ef4444;
+–income-bar: #16a34a;
+–bill-bar: #f97316;
+–card-bar: #6366f1;
+–buffer-bar: #f59e0b;
+–sub-badge-bg: #ede9fe;
+–sub-badge: #6366f1;
+–font: ‘DM Sans’, sans-serif;
+–mono: ‘DM Mono’, monospace;
+–nav-h: 64px;
+–header-h: 160px;
+}
+
+html, body {
+height: 100%; background: var(–bg);
+font-family: var(–font); font-size: 14px;
+-webkit-font-smoothing: antialiased;
+overscroll-behavior: none;
+}
+
+#app {
+max-width: 430px; margin: 0 auto;
+min-height: 100vh; background: var(–bg);
+display: flex; flex-direction: column;
+position: relative; overflow: hidden;
+}
+
+/* ── HEADER ── */
+#header {
+background: var(–dark);
+padding: 14px 18px 16px;
+flex-shrink: 0;
+position: sticky; top: 0; z-index: 20;
+}
+.month-row {
+display: flex; justify-content: space-between; align-items: flex-start;
+margin-bottom: 12px;
+}
+.month-label {
+color: rgba(255,255,255,0.4); font-size: 10px;
+letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 4px;
+}
+.balance-big {
+color: #fff; font-size: 28px; font-weight: 700;
+letter-spacing: -1px; line-height: 1;
+font-family: var(–mono);
+}
+.balance-sub { color: rgba(255,255,255,0.3); font-size: 10px; margin-top: 3px; }
+
+.floor-pill {
+background: rgba(34,197,94,0.12);
+border: 1px solid rgba(34,197,94,0.25);
+border-radius: 10px; padding: 7px 11px; text-align: right;
+transition: background 0.2s, border-color 0.2s;
+}
+.floor-pill.danger {
+background: rgba(239,68,68,0.15);
+border-color: rgba(239,68,68,0.35);
+}
+.floor-label {
+display: flex; align-items: center; gap: 4px;
+justify-content: flex-end; margin-bottom: 2px;
+color: rgba(255,255,255,0.4); font-size: 9px;
+letter-spacing: 0.12em; text-transform: uppercase;
+}
+.floor-amount {
+color: #4ade80; font-size: 14px; font-weight: 700;
+letter-spacing: -0.5px; font-family: var(–mono);
+transition: color 0.2s;
+}
+.floor-pill.danger .floor-amount { color: #f87171; }
+.floor-date { color: rgba(255,255,255,0.3); font-size: 9px; margin-top: 1px; }
+
+.stat-row { display: flex; gap: 6px; }
+.stat-pill {
+flex: 1; background: rgba(255,255,255,0.05);
+border-radius: 9px; padding: 7px 10px;
+border: 1px solid rgba(255,255,255,0.07);
+}
+.stat-pill-label {
+color: rgba(255,255,255,0.35); font-size: 9px;
+letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 2px;
+}
+.stat-pill-val {
+font-size: 12px; font-weight: 700;
+font-family: var(–mono);
+}
+
+/* ── TAB STRIP ── */
+#tabs {
+display: flex; background: var(–surface);
+border-bottom: 1px solid var(–border);
+flex-shrink: 0; position: sticky; top: 0; z-index: 19;
+}
+.tab {
+flex: 1; padding: 9px 0; border: none; background: none;
+font-size: 11px; font-weight: 500; color: var(–faint);
+border-bottom: 2px solid transparent;
+cursor: pointer; font-family: var(–font);
+transition: color 0.15s, border-color 0.15s, font-weight 0.1s;
+}
+.tab.active {
+font-weight: 700; color: var(–dark);
+border-bottom-color: var(–dark);
+}
+
+/* ── SCROLL AREA ── */
+#content {
+flex: 1; overflow-y: auto;
+padding-bottom: calc(var(–nav-h) + 20px);
+-webkit-overflow-scrolling: touch;
+}
+
+/* ── ROW SYSTEM ── */
+.section-header {
+padding: 10px 16px 4px;
+display: flex; align-items: center; gap: 8px;
+}
+.section-title {
+font-size: 10px; font-weight: 700; color: var(–faint);
+letter-spacing: 0.12em; text-transform: uppercase;
+white-space: nowrap;
+}
+.section-line {
+flex: 1; height: 1px; background: var(–border);
+}
+
+.row {
+display: flex; align-items: center;
+padding: 0 16px;
+min-height: 44px;
+border-bottom: 1px solid var(–border2);
+background: transparent;
+position: relative;
+cursor: default;
+transition: background 0.1s;
+}
+.row.tappable { cursor: pointer; }
+.row.tappable:active { background: rgba(0,0,0,0.03); }
+
+.row-bar {
+position: absolute; left: 0; top: 7px; bottom: 7px;
+width: 3px; border-radius: 0 2px 2px 0;
+}
+
+.row-icon {
+display: flex; align-items: center; justify-content: center;
+width: 20px; height: 20px; margin-right: 10px;
+flex-shrink: 0;
+}
+.row-icon svg { display: block; }
+
+.row-body { flex: 1; min-width: 0; }
+.row-label {
+font-size: 12px; font-weight: 600; color: var(–ink);
+white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+letter-spacing: -0.1px;
+display: flex; align-items: center; gap: 5px;
+}
+.row-sub { font-size: 10px; color: var(–faint); margin-top: 1px; }
+
+.row-right { text-align: right; margin-left: 8px; flex-shrink: 0; }
+.row-amount {
+font-size: 12px; font-weight: 700;
+font-family: var(–mono); letter-spacing: -0.3px;
+}
+.row-balance {
+font-size: 10px; color: var(–faint);
+font-family: var(–mono);
+}
+.row-balance.danger { color: var(–danger); font-weight: 700; }
+
+.row-chevron { color: var(–faint); margin-left: 4px; flex-shrink: 0; }
+
+/* passthrough rows */
+.row.pass {
+min-height: 28px; padding-left: 40px; border-bottom: none;
+}
+.row.pass .row-label {
+font-size: 11px; font-weight: 400; color: var(–faint);
+}
+.row.pass .row-amount {
+font-size: 11px; font-weight: 400; color: var(–faint);
+}
+
+/* expand panel */
+.expand-panel {
+background: #f8fafc;
+border-bottom: 1px solid var(–border2);
+overflow: hidden;
+max-height: 0; transition: max-height 0.2s ease;
+}
+.expand-panel.open { max-height: 300px; }
+.expand-row {
+font-size: 11px; color: var(–muted);
+padding: 5px 16px 5px 44px;
+border-bottom: 1px solid #f1f5f9;
+}
+.expand-row:last-child { border-bottom: none; }
+
+/* badges */
+.badge {
+font-size: 9px; font-weight: 600;
+letter-spacing: 0.05em; text-transform: uppercase;
+border-radius: 4px; padding: 1px 5px;
+}
+.badge-sub { background: var(–sub-badge-bg); color: var(–sub-badge); }
+.badge-req { background: #fef2f2; color: #dc2626; }
+
+/* ── REQUIRED TOGGLE ── */
+.toggle-wrap {
+display: flex; align-items: center; gap: 8px;
+}
+.toggle {
+position: relative; width: 34px; height: 19px; flex-shrink: 0;
+}
+.toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-track {
+position: absolute; inset: 0;
+background: #d1d5db; border-radius: 10px;
+transition: background 0.2s; cursor: pointer;
+}
+.toggle input:checked + .toggle-track { background: #dc2626; }
+.toggle-thumb {
+position: absolute; top: 2px; left: 2px;
+width: 15px; height: 15px; border-radius: 50%;
+background: #fff; transition: transform 0.2s;
+box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+pointer-events: none;
+}
+.toggle input:checked ~ .toggle-thumb { transform: translateX(15px); }
+
+/* ── SUMMARY FOOTER ── */
+.summary-row {
+margin: 12px 16px 4px;
+background: var(–surface); border-radius: 10px;
+padding: 10px 14px; border: 1px solid var(–border);
+display: flex; justify-content: space-between; align-items: center;
+}
+.summary-label { font-size: 11px; font-weight: 600; color: var(–muted); }
+.summary-val { font-size: 14px; font-weight: 700; color: var(–ink); font-family: var(–mono); }
+
+/* ── FAB ── */
+#fab {
+position: fixed; bottom: calc(var(–nav-h) + 12px);
+right: calc(50% - 215px + 16px);
+width: 44px; height: 44px; border-radius: 50%;
+background: var(–dark); border: none; cursor: pointer;
+display: flex; align-items: center; justify-content: center;
+color: #fff; box-shadow: 0 4px 14px rgba(15,23,42,0.35);
+z-index: 30; transition: transform 0.15s, box-shadow 0.15s;
+}
+#fab:active { transform: scale(0.93); box-shadow: 0 2px 8px rgba(15,23,42,0.25); }
+
+/* ── BOTTOM NAV ── */
+#nav {
+position: fixed; bottom: 0;
+width: 100%; max-width: 430px;
+left: 50%; transform: translateX(-50%);
+background: var(–surface); border-top: 1px solid var(–border);
+display: flex; padding: 8px 0 16px;
+box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
+z-index: 30;
+}
+.nav-btn {
+flex: 1; border: none; background: none;
+display: flex; flex-direction: column; align-items: center; gap: 3px;
+cursor: pointer; color: var(–faint);
+font-family: var(–font); transition: color 0.15s;
+}
+.nav-btn.active { color: var(–dark); }
+.nav-btn span { font-size: 9px; font-weight: 400; letter-spacing: 0.05em; }
+.nav-btn.active span { font-weight: 700; }
+
+/* ── MODAL / SHEET ── */
+#sheet-overlay {
+position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+z-index: 40; opacity: 0; pointer-events: none;
+transition: opacity 0.25s;
+}
+#sheet-overlay.open { opacity: 1; pointer-events: all; }
+
+.sheet {
+position: fixed; bottom: 0; left: 50%; transform: translateX(-50%) translateY(100%);
+width: 100%; max-width: 430px;
+background: var(–surface); border-radius: 18px 18px 0 0;
+z-index: 41; transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+max-height: 85vh; overflow-y: auto;
+padding-bottom: 32px;
+}
+.sheet.open { transform: translateX(-50%) translateY(0); }
+
+.sheet-handle {
+width: 36px; height: 4px; border-radius: 2px;
+background: var(–border); margin: 12px auto 16px;
+}
+.sheet-title {
+font-size: 15px; font-weight: 700; color: var(–ink);
+padding: 0 20px 14px; border-bottom: 1px solid var(–border);
+letter-spacing: -0.3px;
+}
+
+.form-field { padding: 14px 20px; border-bottom: 1px solid var(–border2); }
+.form-label {
+font-size: 10px; font-weight: 700; color: var(–faint);
+letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px;
+}
+.form-input {
+width: 100%; border: 1px solid var(–border);
+border-radius: 8px; padding: 8px 10px;
+font-size: 13px; font-family: var(–font);
+color: var(–ink); background: #f8fafc;
+outline: none; transition: border-color 0.15s;
+}
+.form-input:focus { border-color: var(–dark); background: #fff; }
+
+.form-select {
+width: 100%; border: 1px solid var(–border);
+border-radius: 8px; padding: 8px 10px;
+font-size: 13px; font-family: var(–font);
+color: var(–ink); background: #f8fafc;
+outline: none; appearance: none;
+background-image: url(“data:image/svg+xml,%3Csvg xmlns=‘http://www.w3.org/2000/svg’ width=‘12’ height=‘12’ viewBox=‘0 0 24 24’ fill=‘none’ stroke=’%2394a3b8’ stroke-width=‘2’ stroke-linecap=‘round’ stroke-linejoin=‘round’%3E%3Cpolyline points=‘6 9 12 15 18 9’/%3E%3C/svg%3E”);
+background-repeat: no-repeat; background-position: right 10px center;
+padding-right: 30px;
+}
+
+.form-toggle-row {
+display: flex; align-items: center; justify-content: space-between;
+}
+.form-toggle-label { font-size: 13px; color: var(–ink); font-weight: 500; }
+.form-toggle-sub { font-size: 10px; color: var(–faint); margin-top: 2px; }
+
+.sheet-actions { padding: 16px 20px 0; display: flex; gap: 10px; }
+.btn-primary {
+flex: 1; background: var(–dark); color: #fff;
+border: none; border-radius: 10px; padding: 12px;
+font-size: 13px; font-weight: 700; font-family: var(–font);
+cursor: pointer; transition: opacity 0.15s;
+}
+.btn-primary:active { opacity: 0.85; }
+.btn-secondary {
+flex: 1; background: var(–bg); color: var(–muted);
+border: 1px solid var(–border); border-radius: 10px; padding: 12px;
+font-size: 13px; font-weight: 600; font-family: var(–font);
+cursor: pointer;
+}
+
+/* ── MONTH NAV ── */
+.month-nav {
+display: flex; align-items: center; gap: 10px;
+}
+.month-arrow {
+background: none; border: none; cursor: pointer;
+color: rgba(255,255,255,0.5); padding: 2px;
+display: flex; align-items: center;
+transition: color 0.15s;
+}
+.month-arrow:hover { color: rgba(255,255,255,0.9); }
+
+/* Toast */
+#toast {
+position: fixed; bottom: calc(var(–nav-h) + 70px);
+left: 50%; transform: translateX(-50%) translateY(20px);
+background: var(–dark); color: #fff;
+padding: 8px 16px; border-radius: 20px;
+font-size: 12px; font-weight: 500;
+opacity: 0; pointer-events: none;
+transition: opacity 0.2s, transform 0.2s;
+z-index: 50; white-space: nowrap;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.btn-danger { background:#fef2f2 !important; color:#dc2626 !important; border-color:#fecaca !important; }
+
+@media (max-width: 430px) {
+#fab { right: 16px; }
+#nav { left: 0; transform: none; }
+.sheet { left: 0; transform: translateY(100%); }
+.sheet.open { transform: translateY(0); }
+}
+</style>
+
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <div class="month-row">
+      <div>
+        <div class="month-label" id="header-month">Loading...</div>
+        <div class="balance-big" id="header-balance">—</div>
+        <div class="balance-sub">projected end of month</div>
+      </div>
+      <div class="floor-pill" id="floor-pill">
+        <div class="floor-label" id="floor-label">
+          <span>floor</span>
+        </div>
+        <div class="floor-amount" id="floor-amount">—</div>
+        <div class="floor-date" id="floor-date"></div>
+      </div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-pill">
+        <div class="stat-pill-label">Total In</div>
+        <div class="stat-pill-val" id="stat-in" style="color:#4ade80">—</div>
+      </div>
+      <div class="stat-pill">
+        <div class="stat-pill-label">Total Out</div>
+        <div class="stat-pill-val" id="stat-out" style="color:#fb923c">—</div>
+      </div>
+      <div class="stat-pill">
+        <div class="stat-pill-label">Net</div>
+        <div class="stat-pill-val" id="stat-net">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tabs">
+    <button class="tab active" data-tab="overview" onclick="switchTab('overview')">Overview</button>
+    <button class="tab" data-tab="bills" onclick="switchTab('bills')">Bills</button>
+    <button class="tab" data-tab="cards" onclick="switchTab('cards')">Cards</button>
+    <button class="tab" data-tab="income" onclick="switchTab('income')">Income</button>
+  </div>
+
+  <div id="content"></div>
+</div>
+
+<button id="fab" onclick="openBillSheet(null)">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+  </svg>
+</button>
+
+<nav id="nav">
+  <button class="nav-btn active" onclick="switchNav(0)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    <span>Budget</span>
+  </button>
+  <button class="nav-btn" onclick="switchNav(1)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    <span>Bills</span>
+  </button>
+  <button class="nav-btn" onclick="switchNav(2)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+    <span>Cards</span>
+  </button>
+  <button class="nav-btn" onclick="switchNav(3);switchTab('settings')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span>Settings</span>
+  </button>
+</nav>
+
+<!-- Shared overlay -->
+
+<div id="sheet-overlay" onclick="closeAllSheets()"></div>
+
+<!-- ── SHEET: Bill / Buffer ── -->
+
+<div id="sheet-bill" class="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title" id="bill-title">Add Bill</div>
+
+  <div class="form-field">
+    <div class="form-label">Type</div>
+    <select class="form-select" id="bill-kind" onchange="onBillKindChange()">
+      <option value="bill">Bill</option>
+      <option value="buffer">Buffer / Estimate</option>
+    </select>
+  </div>
+  <div class="form-field">
+    <div class="form-label">Label</div>
+    <input class="form-input" id="bill-label" type="text" placeholder="e.g. Rent, Netflix, Groceries">
+  </div>
+  <div class="form-field">
+    <div class="form-label">Amount ($)</div>
+    <input class="form-input" id="bill-amount" type="number" inputmode="decimal" placeholder="0.00" step="0.01" min="0">
+  </div>
+  <div class="form-field">
+    <div class="form-label">Day of Month Due</div>
+    <input class="form-input" id="bill-day" type="number" inputmode="numeric" placeholder="1–31" min="1" max="31">
+    <div style="font-size:10px;color:#94a3b8;margin-top:4px;">For card-assigned bills, this is when the charge posts — not when the card is due.</div>
+  </div>
+  <div class="form-field">
+    <div class="form-label">Paid With</div>
+    <select class="form-select" id="bill-payment" onchange="onBillPaymentChange()">
+      <option value="bank">Bank Account (Direct)</option>
+    </select>
+  </div>
+  <div class="form-field" id="bill-field-required" style="display:none">
+    <div class="form-toggle-row">
+      <div>
+        <div class="form-toggle-label">Required by provider</div>
+        <div class="form-toggle-sub">Biller mandates direct bank payment</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="bill-required">
+        <div class="toggle-track"></div>
+        <div class="toggle-thumb"></div>
+      </label>
+    </div>
+  </div>
+  <div class="form-field" id="bill-field-sub">
+    <div class="form-toggle-row">
+      <div>
+        <div class="form-toggle-label">Subscription</div>
+        <div class="form-toggle-sub">Flag for subscription audit view</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="bill-sub">
+        <div class="toggle-track"></div>
+        <div class="toggle-thumb"></div>
+      </label>
+    </div>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn-secondary btn-danger" id="bill-btn-delete" onclick="deleteCurrent('bill')" style="display:none">Delete</button>
+    <button class="btn-secondary" onclick="closeAllSheets()">Cancel</button>
+    <button class="btn-primary" onclick="saveBill()">Save</button>
+  </div>
+</div>
+
+<!-- ── SHEET: Income ── -->
+
+<div id="sheet-income" class="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title" id="income-title">Add Income</div>
+
+  <div class="form-field">
+    <div class="form-label">Label</div>
+    <input class="form-input" id="income-label" type="text" placeholder="e.g. Paycheck, Freelance, Rent">
+  </div>
+  <div class="form-field">
+    <div class="form-label">Amount ($)</div>
+    <input class="form-input" id="income-amount" type="number" inputmode="decimal" placeholder="0.00" step="0.01" min="0">
+  </div>
+  <div class="form-field">
+    <div class="form-label">Day of Month Received</div>
+    <input class="form-input" id="income-day" type="number" inputmode="numeric" placeholder="1–31" min="1" max="31">
+  </div>
+  <div class="sheet-actions">
+    <button class="btn-secondary btn-danger" id="income-btn-delete" onclick="deleteCurrent('income')" style="display:none">Delete</button>
+    <button class="btn-secondary" onclick="closeAllSheets()">Cancel</button>
+    <button class="btn-primary" onclick="saveIncome()">Save</button>
+  </div>
+</div>
+
+<!-- ── SHEET: Payment Method (card or bank account) ── -->
+
+<div id="sheet-payment" class="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title" id="payment-title">Add Payment Method</div>
+
+  <div class="form-field">
+    <div class="form-label">Type</div>
+    <select class="form-select" id="payment-kind" onchange="onPaymentKindChange()">
+      <option value="card">Credit Card</option>
+      <option value="bankacct">Bank Account</option>
+    </select>
+  </div>
+  <div class="form-field">
+    <div class="form-label">Name</div>
+    <input class="form-input" id="payment-label" type="text" placeholder="e.g. Chase Sapphire, Checking">
+  </div>
+  <div class="form-field" id="payment-field-due">
+    <div class="form-label">Payment Due Date (day of month)</div>
+    <input class="form-input" id="payment-day" type="number" inputmode="numeric" placeholder="1–31" min="1" max="31">
+    <div style="font-size:10px;color:#94a3b8;margin-top:4px;">The day your card statement is due each month.</div>
+  </div>
+  <div class="form-field" id="payment-field-start" style="display:none">
+    <div class="form-label">Current Balance ($)</div>
+    <input class="form-input" id="payment-startbal" type="number" inputmode="decimal" placeholder="e.g. 3200.00" step="0.01" min="0">
+    <div style="font-size:10px;color:#94a3b8;margin-top:4px;">Your bank balance right now — Flowr builds forward from here.</div>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn-secondary btn-danger" id="payment-btn-delete" onclick="deleteCurrent('payment')" style="display:none">Delete</button>
+    <button class="btn-secondary" onclick="closeAllSheets()">Cancel</button>
+    <button class="btn-primary" onclick="savePaymentMethod()">Save</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+//  IndexedDB
+// ══════════════════════════════════════════
+const DB_NAME = 'flowr_db';
+const DB_VER  = 1;
+let db;
+
+function openDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains('entries')) {
+        const s = d.createObjectStore('entries', { keyPath: 'id', autoIncrement: true });
+        s.createIndex('type', 'type', { unique: false });
+      }
+      if (!d.objectStoreNames.contains('settings')) {
+        d.createObjectStore('settings', { keyPath: 'key' });
+      }
+    };
+    req.onsuccess = e => { db = e.target.result; res(db); };
+    req.onerror   = e => rej(e.target.error);
+  });
+}
+
+function dbGetAll(store) {
+  return new Promise((res, rej) => {
+    const tx  = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).getAll();
+    req.onsuccess = e => res(e.target.result);
+    req.onerror   = e => rej(e.target.error);
+  });
+}
+
+function dbPut(store, obj) {
+  return new Promise((res, rej) => {
+    const tx  = db.transaction(store, 'readwrite');
+    const req = tx.objectStore(store).put(obj);
+    req.onsuccess = e => res(e.target.result);
+    req.onerror   = e => rej(e.target.error);
+  });
+}
+
+function dbDelete(store, key) {
+  return new Promise((res, rej) => {
+    const tx  = db.transaction(store, 'readwrite');
+    const req = tx.objectStore(store).delete(key);
+    req.onsuccess = e => res(e.target.result);
+    req.onerror   = e => rej(e.target.error);
+  });
+}
+
+// ══════════════════════════════════════════
+//  State
+// ══════════════════════════════════════════
+let entries       = [];  // all db entries
+let currentTab    = 'overview';
+let expandedId    = null;
+let currentMonth  = new Date().getMonth();
+let currentYear   = new Date().getFullYear();
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+// ══════════════════════════════════════════
+//  Icons (SVG strings)
+// ══════════════════════════════════════════
+const ICONS = {
+  bank:    `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M8 10v11M12 10v11M16 10v11M20 10v11"/></svg>`,
+  paycheck:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>`,
+  home:    `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>`,
+  card:    `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>`,
+  bolt:    `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
+  wifi:    `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/></svg>`,
+  car:     `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1l3-4h8l3 4h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2"/><circle cx="7.5" cy="17" r="2.5"/><circle cx="16.5" cy="17" r="2.5"/></svg>`,
+  music:   `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`,
+  tv:      `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>`,
+  food:    `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>`,
+  gym:     `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/><path d="M3 9.5v5"/><path d="M21 9.5v5"/><path d="M6.5 6.5v11"/><path d="M17.5 6.5v11"/></svg>`,
+  bill:    `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
+  buffer:  `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+  chevD:   `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`,
+  chevU:   `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>`,
+  warn:    `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+  lock:    `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
+};
+
+function iconFor(entry) {
+  const l = (entry.label || '').toLowerCase();
+  if (entry.type === 'income') return ICONS.paycheck;
+  if (entry.type === 'card')   return ICONS.card;
+  if (entry.type === 'buffer') return ICONS.food;
+  if (entry.type === 'start')  return ICONS.bank;
+  if (l.includes('rent') || l.includes('mortgage')) return ICONS.home;
+  if (l.includes('electric') || l.includes('utility') || l.includes('power')) return ICONS.bolt;
+  if (l.includes('internet') || l.includes('wifi') || l.includes('cable')) return ICONS.wifi;
+  if (l.includes('car') || l.includes('auto') || l.includes('insurance')) return ICONS.car;
+  if (l.includes('spotify') || l.includes('music') || l.includes('apple music')) return ICONS.music;
+  if (l.includes('netflix') || l.includes('hulu') || l.includes('disney') || l.includes('tv') || l.includes('stream')) return ICONS.tv;
+  if (l.includes('gym') || l.includes('fitness') || l.includes('peloton')) return ICONS.gym;
+  if (l.includes('food') || l.includes('dining') || l.includes('restaurant') || l.includes('grocery')) return ICONS.food;
+  return ICONS.bill;
+}
+
+// ══════════════════════════════════════════
+//  Formatting
+// ══════════════════════════════════════════
+function fmt(n, sign = false) {
+  if (n === null || n === undefined) return '';
+  const abs = Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (sign && n > 0) return `+$${abs}`;
+  if (n < 0) return `-$${abs}`;
+  return `$${abs}`;
+}
+
+function ordinal(n) {
+  const s = ['th','st','nd','rd'], v = n % 100;
+  return n + (s[(v-20)%10] || s[v] || s[0]);
+}
+
+// ══════════════════════════════════════════
+//  Compute timeline for a given month
+// ══════════════════════════════════════════
+function buildTimeline(month, year) {
+  // Get starting balance entry (global, not month-specific)
+  const startEntry = entries.find(e => e.type === 'start');
+  const startBal   = startEntry ? startEntry.amount : 0;
+
+  // Gather cards for lookup
+  const cards = entries.filter(e => e.type === 'card');
+
+  // Gather bills/buffers/income for this month
+  const recurring = entries.filter(e =>
+    e.type === 'income' || e.type === 'bill' || e.type === 'buffer'
+  );
+
+  // Build events: { day, label, type, amount, entryId, isPassthrough, via, required, isSub }
+  const events = [];
+
+  // Starting balance on day 1
+  events.push({ day: 1, label: 'Starting Balance', type: 'start', amount: startBal, entryId: 'start', isPassthrough: false });
+
+  // Income + direct bills + buffers
+  recurring.forEach(e => {
+    const day = parseInt(e.day) || 1;
+    events.push({
+      day, label: e.label, type: e.type,
+      amount: e.type === 'income' ? e.amount : -Math.abs(e.amount),
+      entryId: e.id, isPassthrough: false,
+      required: e.required || false,
+      isSub: e.isSub || false,
+      payment: e.payment || 'bank',
+      via: null,
+    });
+  });
+
+  // Card payment events + passthroughs
+  cards.forEach(card => {
+    // Find all bills/buffers assigned to this card
+    const assigned = entries.filter(e =>
+      (e.type === 'bill' || e.type === 'buffer') && e.payment === String(card.id)
+    );
+    const cardTotal = assigned.reduce((s, e) => s + Math.abs(e.amount), 0);
+
+    if (cardTotal > 0) {
+      events.push({
+        day: parseInt(card.day) || 1,
+        label: card.label, type: 'card',
+        amount: -cardTotal, entryId: card.id,
+        isPassthrough: false,
+        expandItems: assigned.map(a => `${a.label} · ${fmt(a.amount)}`),
+      });
+
+      // passthrough rows
+      assigned.forEach(a => {
+        events.push({
+          day: parseInt(a.day) || 1,
+          label: a.label, type: 'pass',
+          amount: -Math.abs(a.amount),
+          entryId: a.id, isPassthrough: true,
+          via: card.label, isSub: a.isSub || false,
+        });
+      });
+    }
+  });
+
+  // Sort by day, then: start first, income before bills
+  events.sort((a, b) => {
+    if (a.day !== b.day) return a.day - b.day;
+    const order = { start: 0, income: 1, bill: 2, buffer: 3, card: 4, pass: 5 };
+    return (order[a.type] ?? 5) - (order[b.type] ?? 5);
+  });
+
+  // Compute running balance (skip passthroughs)
+  let balance = 0;
+  events.forEach(ev => {
+    if (!ev.isPassthrough) {
+      balance += ev.amount;
+      ev.balance = balance;
+    } else {
+      ev.balance = null;
+    }
+  });
+
+  return events;
+}
+
+// ══════════════════════════════════════════
+//  Header update
+// ══════════════════════════════════════════
+function updateHeader() {
+  const timeline = buildTimeline(currentMonth, currentYear);
+  const balances = timeline.filter(e => e.balance !== null).map(e => e.balance);
+  const endBal   = balances.length ? balances[balances.length - 1] : 0;
+  const floorBal = balances.length ? Math.min(...balances) : 0;
+  const floorEv  = timeline.find(e => e.balance === floorBal);
+
+  const totalIn  = timeline.filter(e => e.amount > 0).reduce((s, e) => s + e.amount, 0);
+  const totalOut = timeline.filter(e => e.amount < 0 && !e.isPassthrough).reduce((s, e) => s + e.amount, 0);
+  const net      = totalIn + totalOut;
+
+  document.getElementById('header-month').textContent   = `${MONTHS[currentMonth]} ${currentYear}`;
+  document.getElementById('header-balance').textContent = fmt(endBal);
+  document.getElementById('floor-amount').textContent   = fmt(floorBal);
+  document.getElementById('floor-date').textContent     = floorEv ? floorEv.label : '';
+  document.getElementById('stat-in').textContent        = fmt(totalIn);
+  document.getElementById('stat-out').textContent       = fmt(Math.abs(totalOut));
+  document.getElementById('stat-net').textContent       = fmt(net, true);
+  document.getElementById('stat-net').style.color       = net >= 0 ? '#4ade80' : '#f87171';
+
+  const pill = document.getElementById('floor-pill');
+  const amt  = document.getElementById('floor-amount');
+  if (floorBal < 500) {
+    pill.classList.add('danger');
+    document.getElementById('floor-label').innerHTML =
+      `<span style="color:#f87171">${ICONS.warn}</span><span>floor</span>`;
+  } else {
+    pill.classList.remove('danger');
+    document.getElementById('floor-label').innerHTML = `<span>floor</span>`;
+  }
+}
+
+// ══════════════════════════════════════════
+//  Render tabs
+// ══════════════════════════════════════════
+function render() {
+  updateHeader();
+  const content = document.getElementById('content');
+  if (currentTab === 'overview') content.innerHTML = renderOverview();
+  if (currentTab === 'bills')    content.innerHTML = renderBills();
+  if (currentTab === 'cards')    content.innerHTML = renderCards();
+  if (currentTab === 'income')   content.innerHTML = renderIncome();
+  if (currentTab === 'settings') content.innerHTML = renderSettings();
+}
+
+// ── OVERVIEW ──
+function renderOverview() {
+  const timeline = buildTimeline(currentMonth, currentYear);
+  if (!timeline.length) return emptyState('No entries yet. Tap + to add income, bills, or cards.');
+
+  let html = '';
+  let lastDay = null;
+
+  timeline.forEach(ev => {
+    if (!ev.isPassthrough && ev.day !== lastDay) {
+      const date = ev.type === 'start'
+        ? `${MONTHS[currentMonth].slice(0,3)} ${ev.day}`
+        : `${MONTHS[currentMonth].slice(0,3)} ${ordinal(ev.day)}`;
+      html += sectionHeader(date);
+      lastDay = ev.day;
+    }
+
+    if (ev.isPassthrough) {
+      html += passthroughRow(ev);
+    } else {
+      html += overviewRow(ev);
+    }
+  });
+
+  return html;
+}
+
+function overviewRow(ev) {
+  const colors = { income:'#16a34a', bill:'#ea580c', card:'#4f46e5', buffer:'#b45309', start:'#475569' };
+  const bars   = { income:'#16a34a', bill:'#f97316', card:'#6366f1', buffer:'#f59e0b', start:'#94a3b8' };
+  const color  = colors[ev.type] || '#64748b';
+  const bar    = bars[ev.type]   || '#94a3b8';
+  const icon   = iconFor({ type: ev.type, label: ev.label });
+  const amtStr = ev.type === 'income' || ev.type === 'start' ? fmt(ev.amount, true) : fmt(ev.amount);
+  const balDanger = ev.balance !== null && ev.balance < 500;
+  const hasDetail = ev.expandItems && ev.expandItems.length;
+  const isStart   = ev.type === 'start';
+  const isExp  = expandedId === ev.entryId;
+
+  let detailHtml = '';
+  if (hasDetail) {
+    const items = ev.expandItems.map(i => `<div class="expand-row">${i}</div>`).join('');
+    detailHtml = `<div class="expand-panel ${isExp ? 'open' : ''}" id="ep-${ev.entryId}">${items}</div>`;
+  }
+
+  const chevron = hasDetail
+    ? `<span class="row-chevron">${isExp ? ICONS.chevU : ICONS.chevD}</span>` : '';
+
+  const reqBadge = ev.required
+    ? `<span class="badge badge-req">${ICONS.lock} required</span>` : '';
+
+  return `
+    <div class="row ${(hasDetail || isStart) ? 'tappable' : ''}"
+         style="--bar:${bar}"
+         ${hasDetail ? `onclick="toggleExpand('${ev.entryId}')"` : isStart ? `onclick="openPaymentSheet(${ev.entryId === 'start' ? (entries.find(e=>e.type==='start')?.id || 'null') : ev.entryId})"` : ''}>
+      <div class="row-bar" style="background:${bar}"></div>
+      <div class="row-icon" style="color:${color}">${icon}</div>
+      <div class="row-body">
+        <div class="row-label">${ev.label} ${reqBadge}</div>
+      </div>
+      <div class="row-right">
+        <div class="row-amount" style="color:${color}">${amtStr}</div>
+        ${ev.balance !== null ? `<div class="row-balance ${balDanger ? 'danger' : ''}">${fmt(ev.balance)}</div>` : ''}
+      </div>
+      ${chevron}
+    </div>
+    ${detailHtml}
+  `;
+}
+
+function passthroughRow(ev) {
+  const subBadge = ev.isSub ? `<span class="badge badge-sub" style="font-size:8px">sub</span>` : '';
+  return `
+    <div class="row pass">
+      <div class="row-icon" style="color:#cbd5e1">${iconFor(ev)}</div>
+      <div class="row-body">
+        <div class="row-label">
+          ${ev.label} ${subBadge}
+          <span style="color:#cbd5e1;font-weight:400;font-size:10px">· ${ev.via}</span>
+        </div>
+      </div>
+      <div class="row-right">
+        <div class="row-amount">${fmt(ev.amount)}</div>
+      </div>
+    </div>
+  `;
+}
+
+// ── BILLS ──
+function renderBills() {
+  const bills = entries.filter(e => e.type === 'bill' || e.type === 'buffer');
+  const cards  = entries.filter(e => e.type === 'card');
+
+  const addBtn = `
+    <button onclick="openBillSheet(null)" style="
+      background:var(--dark);color:#fff;border:none;
+      border-radius:8px;padding:4px 12px;font-size:11px;font-weight:700;
+      font-family:var(--font);cursor:pointer;white-space:nowrap;flex-shrink:0;
+    ">+ Add</button>
+  `;
+
+  if (!bills.length) {
+    return `
+      <div style="padding:10px 16px 6px;display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:8px;flex:1;">
+          <span class="section-title">Bills &amp; Buffers</span>
+          <div class="section-line"></div>
+        </div>
+        ${addBtn}
+      </div>
+      ${emptyState('No bills yet. Tap Add to get started.')}
+    `;
+  }
+
+  const direct = bills.filter(e => e.payment === 'bank' || !e.payment);
+
+  let html = '';
+
+  if (direct.length) {
+    html += `
+      <div style="padding:10px 16px 6px;display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:8px;flex:1;">
+          <span class="section-title">Direct to Bank</span>
+          <div class="section-line"></div>
+        </div>
+        ${addBtn}
+      </div>
+    `;
+    direct.forEach(b => { html += billRow(b, '#ea580c', '#f97316'); });
+  } else {
+    html += `
+      <div style="padding:10px 16px 6px;display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:8px;flex:1;">
+          <span class="section-title">Bills &amp; Buffers</span>
+          <div class="section-line"></div>
+        </div>
+        ${addBtn}
+      </div>
+    `;
+  }
+
+  cards.forEach(card => {
+    const assigned = bills.filter(e => e.payment === String(card.id));
+    if (!assigned.length) return;
+    html += sectionHeader(card.label);
+    assigned.forEach(b => {
+      const color = b.isSub ? '#6366f1' : '#ea580c';
+      const bar   = b.isSub ? '#6366f1' : '#f97316';
+      html += billRow(b, color, bar);
+    });
+  });
+
+  const total = bills.reduce((s, b) => s + Math.abs(b.amount), 0);
+  html += `
+    <div class="summary-row">
+      <span class="summary-label">Monthly Total</span>
+      <span class="summary-val">${fmt(total)}</span>
+    </div>
+  `;
+
+  return html;
+}
+
+function billRow(b, color, bar) {
+  const icon = iconFor(b);
+  const subBadge = b.isSub
+    ? `<span class="badge badge-sub">sub</span>` : '';
+  const reqBadge = b.required
+    ? `<span class="badge badge-req">${ICONS.lock} req</span>` : '';
+
+  return `
+    <div class="row tappable" onclick="openBillSheet(${b.id})">
+      <div class="row-bar" style="background:${bar}"></div>
+      <div class="row-icon" style="color:${color}">${icon}</div>
+      <div class="row-body">
+        <div class="row-label">${b.label} ${subBadge} ${reqBadge}</div>
+        <div class="row-sub">Due ${ordinal(b.day || 1)}</div>
+      </div>
+      <div class="row-right">
+        <div class="row-amount" style="color:${color}">${fmt(b.amount)}</div>
+      </div>
+      <span class="row-chevron">${ICONS.chevD}</span>
+    </div>
+  `;
+}
+
+// ── CARDS ──
+function renderCards() {
+  const cards = entries.filter(e => e.type === 'card');
+  if (!cards.length) return emptyState('No credit cards yet. Tap + to add one.');
+
+  const cardColors = ['#4f46e5','#d97706','#0891b2','#be185d'];
+  let html = '';
+
+  cards.forEach((card, ci) => {
+    const assigned = entries.filter(e =>
+      (e.type === 'bill' || e.type === 'buffer') && e.payment === String(card.id)
+    );
+    const total = assigned.reduce((s, e) => s + Math.abs(e.amount), 0);
+    const color = cardColors[ci % cardColors.length];
+    const isExp = expandedId === `card-${card.id}`;
+
+    const itemsHtml = assigned
+      .map(a => `<div class="expand-row">${a.label} · ${fmt(a.amount)}</div>`)
+      .join('');
+
+    html += `
+      <div class="row tappable" onclick="toggleExpand('card-${card.id}')">
+        <div class="row-bar" style="background:${color}"></div>
+        <div class="row-icon" style="color:${color}">${ICONS.card}</div>
+        <div class="row-body">
+          <div class="row-label">${card.label}</div>
+          <div class="row-sub">Due ${ordinal(card.day || 1)} · ${assigned.length} charge${assigned.length !== 1 ? 's' : ''}</div>
+        </div>
+        <div class="row-right">
+          <div class="row-amount" style="color:${color}">${fmt(total)}</div>
+          <div class="row-balance">projected</div>
+        </div>
+        <span class="row-chevron">${isExp ? ICONS.chevU : ICONS.chevD}</span>
+      </div>
+      <div class="expand-panel ${isExp ? 'open' : ''}">${itemsHtml}</div>
+    `;
+  });
+
+  const grandTotal = entries
+    .filter(e => e.type === 'bill' || e.type === 'buffer')
+    .filter(e => e.payment && e.payment !== 'bank')
+    .reduce((s, e) => s + Math.abs(e.amount), 0);
+
+  html += `
+    <div class="summary-row">
+      <span class="summary-label">Total Card Payments</span>
+      <span class="summary-val">${fmt(grandTotal)}</span>
+    </div>
+  `;
+
+  return html;
+}
+
+// ── INCOME ──
+function renderIncome() {
+  const income = entries.filter(e => e.type === 'income');
+
+  let html = `
+    <div style="padding:10px 16px 6px;display:flex;align-items:center;justify-content:space-between;">
+      <div style="display:flex;align-items:center;gap:8px;flex:1;">
+        <span class="section-title">Recurring Income</span>
+        <div class="section-line"></div>
+      </div>
+      <button onclick="openIncomeSheet(null)" style="
+        margin-left:10px;background:var(--dark);color:#fff;border:none;
+        border-radius:8px;padding:4px 12px;font-size:11px;font-weight:700;
+        font-family:var(--font);cursor:pointer;white-space:nowrap;flex-shrink:0;
+      ">+ Add</button>
+    </div>
+  `;
+
+  if (!income.length) {
+    html += emptyState('No income yet. Tap Add to get started.');
+  } else {
+    income.forEach(inc => {
+      html += `
+        <div class="row tappable" onclick="openIncomeSheet(${inc.id})">
+          <div class="row-bar" style="background:#16a34a"></div>
+          <div class="row-icon" style="color:#16a34a">${ICONS.paycheck}</div>
+          <div class="row-body">
+            <div class="row-label">${inc.label}</div>
+            <div class="row-sub">${ordinal(inc.day || 1)} of each month</div>
+          </div>
+          <div class="row-right">
+            <div class="row-amount" style="color:#16a34a">+${fmt(inc.amount)}</div>
+          </div>
+          <span class="row-chevron">${ICONS.chevD}</span>
+        </div>
+      `;
+    });
+    const total = income.reduce((s, e) => s + e.amount, 0);
+    html += `
+      <div class="summary-row">
+        <span class="summary-label">Monthly Income</span>
+        <span class="summary-val" style="color:#16a34a">+${fmt(total)}</span>
+      </div>
+    `;
+  }
+  return html;
+}
+
+// ── SETTINGS / ACCOUNTS ──
+function renderSettings() {
+  const cards    = entries.filter(e => e.type === 'card');
+  const startEntry = entries.find(e => e.type === 'start');
+  const cardColors = ['#4f46e5','#d97706','#0891b2','#be185d'];
+
+  let html = '';
+
+  // Bank account section
+  html += `
+    <div style="padding:10px 16px 6px;display:flex;align-items:center;justify-content:space-between;">
+      <div style="display:flex;align-items:center;gap:8px;flex:1;">
+        <span class="section-title">Bank Account</span>
+        <div class="section-line"></div>
+      </div>
+    </div>
+  `;
+
+  if (startEntry) {
+    html += `
+      <div class="row tappable" onclick="openPaymentSheet(${startEntry.id})">
+        <div class="row-bar" style="background:#16a34a"></div>
+        <div class="row-icon" style="color:#16a34a">${ICONS.bank}</div>
+        <div class="row-body">
+          <div class="row-label">Checking Account</div>
+          <div class="row-sub">Starting balance</div>
+        </div>
+        <div class="row-right">
+          <div class="row-amount" style="color:#16a34a">${fmt(startEntry.amount)}</div>
+        </div>
+        <span class="row-chevron">${ICONS.chevD}</span>
+      </div>
+    `;
+  } else {
+    html += `
+      <div class="row tappable" onclick="openPaymentSheet(null); document.getElementById('payment-kind').value='bankacct'; onPaymentKindChange();">
+        <div class="row-icon" style="color:#94a3b8">${ICONS.bank}</div>
+        <div class="row-body">
+          <div class="row-label" style="color:#94a3b8">Add bank account &amp; starting balance</div>
+        </div>
+        <span style="color:#94a3b8;font-size:18px;margin-left:auto;padding-right:4px;">+</span>
+      </div>
+    `;
+  }
+
+  // Credit cards section
+  html += `
+    <div style="padding:14px 16px 6px;display:flex;align-items:center;justify-content:space-between;">
+      <div style="display:flex;align-items:center;gap:8px;flex:1;">
+        <span class="section-title">Credit Cards</span>
+        <div class="section-line"></div>
+      </div>
+      <button onclick="openPaymentSheet(null)" style="
+        margin-left:10px;background:var(--dark);color:#fff;border:none;
+        border-radius:8px;padding:4px 12px;font-size:11px;font-weight:700;
+        font-family:var(--font);cursor:pointer;white-space:nowrap;flex-shrink:0;
+      ">+ Add</button>
+    </div>
+  `;
+
+  if (!cards.length) {
+    html += emptyState('No credit cards yet. Tap Add to set one up.');
+  } else {
+    cards.forEach((card, ci) => {
+      const assigned = entries.filter(e =>
+        (e.type === 'bill' || e.type === 'buffer') && e.payment === String(card.id)
+      );
+      const total = assigned.reduce((s, e) => s + e.amount, 0);
+      const color = cardColors[ci % cardColors.length];
+      html += `
+        <div class="row tappable" onclick="openPaymentSheet(${card.id})">
+          <div class="row-bar" style="background:${color}"></div>
+          <div class="row-icon" style="color:${color}">${ICONS.card}</div>
+          <div class="row-body">
+            <div class="row-label">${card.label}</div>
+            <div class="row-sub">Due ${ordinal(card.day || 1)} · ${assigned.length} bill${assigned.length !== 1 ? 's' : ''} assigned</div>
+          </div>
+          <div class="row-right">
+            <div class="row-amount" style="color:${color}">${fmt(total)}</div>
+            <div class="row-balance">projected</div>
+          </div>
+          <span class="row-chevron">${ICONS.chevD}</span>
+        </div>
+      `;
+    });
+  }
+
+  return html;
+}
+
+// ── helpers ──
+function sectionHeader(title) {
+  return `
+    <div class="section-header">
+      <span class="section-title">${title}</span>
+      <div class="section-line"></div>
+    </div>
+  `;
+}
+
+function emptyState(msg) {
+  return `
+    <div style="padding:40px 24px;text-align:center;color:var(--faint);font-size:13px;line-height:1.6;">
+      ${msg}
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════
+//  Expand toggle
+// ══════════════════════════════════════════
+function toggleExpand(id) {
+  expandedId = expandedId === id ? null : id;
+  render();
+}
+
+// ══════════════════════════════════════════
+//  Tab & nav switching
+// ══════════════════════════════════════════
+function switchTab(tab) {
+  currentTab = tab;
+  expandedId = null;
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === tab);
+  });
+  render();
+}
+
+function switchNav(idx) {
+  document.querySelectorAll('.nav-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+}
+
+// ══════════════════════════════════════════
+//  Sheet management
+// ══════════════════════════════════════════
+let editingId   = null;
+let editingType = null; // 'bill' | 'income' | 'payment'
+
+function closeAllSheets() {
+  document.getElementById('sheet-overlay').classList.remove('open');
+  document.querySelectorAll('.sheet').forEach(s => s.classList.remove('open'));
+  editingId = null; editingType = null;
+}
+
+function openSheet(sheetId) {
+  document.getElementById('sheet-overlay').classList.add('open');
+  document.getElementById(sheetId).classList.add('open');
+}
+
+// ── Bill / Buffer sheet ──
+function openBillSheet(id) {
+  editingId = id || null;
+  editingType = 'bill';
+  const e = id ? entries.find(x => x.id === id) : null;
+
+  document.getElementById('bill-title').textContent = e ? 'Edit Bill' : 'Add Bill';
+  document.getElementById('bill-kind').value    = e ? (e.type === 'buffer' ? 'buffer' : 'bill') : 'bill';
+  document.getElementById('bill-label').value   = e ? e.label : '';
+  document.getElementById('bill-amount').value  = e ? e.amount : '';
+  document.getElementById('bill-day').value     = e ? (e.day || '') : '';
+  document.getElementById('bill-sub').checked   = e ? (e.isSub || false) : false;
+  document.getElementById('bill-required').checked = e ? (e.required || false) : false;
+  document.getElementById('bill-btn-delete').style.display = e ? '' : 'none';
+
+  refreshBillPaymentOptions(e ? (e.payment || 'bank') : 'bank');
+  onBillPaymentChange();
+  openSheet('sheet-bill');
+  setTimeout(() => document.getElementById('bill-label').focus(), 350);
+}
+
+function onBillKindChange() { /* no field changes needed */ }
+
+function refreshBillPaymentOptions(selectedValue) {
+  const sel = document.getElementById('bill-payment');
+  sel.innerHTML = `<option value="bank">Bank Account (Direct)</option>`;
+  entries.filter(e => e.type === 'card').forEach(c => {
+    sel.innerHTML += `<option value="${c.id}">${c.label}</option>`;
+  });
+  sel.value = selectedValue || 'bank';
+}
+
+function onBillPaymentChange() {
+  const payment = document.getElementById('bill-payment').value;
+  document.getElementById('bill-field-required').style.display = payment === 'bank' ? '' : 'none';
+}
+
+async function saveBill() {
+  const kind     = document.getElementById('bill-kind').value;
+  const label    = document.getElementById('bill-label').value.trim();
+  const amount   = parseFloat(document.getElementById('bill-amount').value);
+  const day      = parseInt(document.getElementById('bill-day').value) || 1;
+  const payment  = document.getElementById('bill-payment').value;
+  const isSub    = document.getElementById('bill-sub').checked;
+  const required = document.getElementById('bill-required').checked;
+
+  if (!label)          { showToast('Please enter a label'); return; }
+  if (isNaN(amount) || amount <= 0) { showToast('Please enter a valid amount'); return; }
+
+  const entry = {
+    type: kind, label, amount, day, payment,
+    isSub, required: payment === 'bank' ? required : false,
+  };
+  if (editingId) entry.id = editingId;
+
+  await dbPut('entries', entry);
+  entries = await dbGetAll('entries');
+  closeAllSheets();
+  render();
+  showToast(editingId ? 'Updated' : 'Bill saved');
+}
+
+// ── Income sheet ──
+function openIncomeSheet(id) {
+  editingId = id || null;
+  editingType = 'income';
+  const e = id ? entries.find(x => x.id === id) : null;
+
+  document.getElementById('income-title').textContent = e ? 'Edit Income' : 'Add Income';
+  document.getElementById('income-label').value  = e ? e.label : '';
+  document.getElementById('income-amount').value = e ? e.amount : '';
+  document.getElementById('income-day').value    = e ? (e.day || '') : '';
+  document.getElementById('income-btn-delete').style.display = e ? '' : 'none';
+
+  openSheet('sheet-income');
+  setTimeout(() => document.getElementById('income-label').focus(), 350);
+}
+
+async function saveIncome() {
+  const label  = document.getElementById('income-label').value.trim();
+  const amount = parseFloat(document.getElementById('income-amount').value);
+  const day    = parseInt(document.getElementById('income-day').value) || 1;
+
+  if (!label)                       { showToast('Please enter a label'); return; }
+  if (isNaN(amount) || amount <= 0) { showToast('Please enter a valid amount'); return; }
+
+  const entry = { type: 'income', label, amount, day };
+  if (editingId) entry.id = editingId;
+
+  await dbPut('entries', entry);
+  entries = await dbGetAll('entries');
+  closeAllSheets();
+  render();
+  showToast(editingId ? 'Updated' : 'Income saved');
+}
+
+// ── Payment Method sheet (cards + bank accounts) ──
+function openPaymentSheet(id) {
+  editingId = id || null;
+  editingType = 'payment';
+  const e = id ? entries.find(x => x.id === id) : null;
+
+  // Determine if editing a bank account (start type) or card
+  const isBank = e ? e.type === 'start' : false;
+
+  document.getElementById('payment-title').textContent = e ? 'Edit Payment Method' : 'Add Payment Method';
+  document.getElementById('payment-kind').value   = isBank ? 'bankacct' : 'card';
+  document.getElementById('payment-label').value  = e ? (isBank ? 'Checking Account' : e.label) : '';
+  document.getElementById('payment-day').value    = e && !isBank ? (e.day || '') : '';
+  document.getElementById('payment-startbal').value = e && isBank ? e.amount : '';
+  document.getElementById('payment-btn-delete').style.display = e ? '' : 'none';
+
+  // Bank account kind: label field shows name, disable editing kind if it's the start entry
+  if (isBank) {
+    document.getElementById('payment-label').value = 'Checking Account';
+    document.getElementById('payment-label').placeholder = 'e.g. Checking, Savings';
+  }
+
+  onPaymentKindChange();
+  openSheet('sheet-payment');
+  setTimeout(() => document.getElementById('payment-label').focus(), 350);
+}
+
+function onPaymentKindChange() {
+  const kind = document.getElementById('payment-kind').value;
+  document.getElementById('payment-field-due').style.display   = kind === 'card'     ? '' : 'none';
+  document.getElementById('payment-field-start').style.display = kind === 'bankacct' ? '' : 'none';
+}
+
+async function savePaymentMethod() {
+  const kind  = document.getElementById('payment-kind').value;
+  const label = document.getElementById('payment-label').value.trim();
+
+  if (!label) { showToast('Please enter a name'); return; }
+
+  if (kind === 'card') {
+    const day = parseInt(document.getElementById('payment-day').value) || 1;
+    const entry = { type: 'card', label, amount: 0, day };
+    if (editingId) entry.id = editingId;
+    await dbPut('entries', entry);
+
+  } else {
+    // Bank account = the starting balance entry
+    const bal = parseFloat(document.getElementById('payment-startbal').value);
+    if (isNaN(bal) || bal < 0) { showToast('Please enter your current balance'); return; }
+    // Replace any existing start entry
+    const existing = entries.find(e => e.type === 'start');
+    if (existing && !editingId) await dbDelete('entries', existing.id);
+    const entry = { type: 'start', label: 'Starting Balance', amount: bal, day: 1 };
+    if (editingId) entry.id = editingId;
+    await dbPut('entries', entry);
+  }
+
+  entries = await dbGetAll('entries');
+  closeAllSheets();
+  render();
+  showToast('Saved');
+}
+
+// ── Generic delete ──
+async function deleteCurrent(context) {
+  if (!editingId) return;
+  const entry = entries.find(e => e.id === editingId);
+  if (!entry) return;
+
+  if (entry.type === 'card') {
+    const assigned = entries.filter(e => e.payment === String(editingId));
+    if (assigned.length) {
+      showToast(`Reassign ${assigned.length} bill(s) first`);
+      return;
+    }
+  }
+
+  if (!confirm(`Delete "${entry.label}"?`)) return;
+  await dbDelete('entries', editingId);
+  entries = await dbGetAll('entries');
+  closeAllSheets();
+  render();
+  showToast('Deleted');
+}
+
+// Keep editEntry as alias for bills/income rows
+function editEntry(id) {
+  const e = entries.find(x => x.id === id);
+  if (!e) return;
+  if (e.type === 'income') return openIncomeSheet(id);
+  if (e.type === 'card' || e.type === 'start') return openPaymentSheet(id);
+  openBillSheet(id);
+}
+
+// FAB context: open bill sheet by default
+function openSheet_FAB() { openBillSheet(null); }
+
+// ══════════════════════════════════════════
+//  Onboarding — first launch prompt
+// ══════════════════════════════════════════
+function showOnboarding() {
+  document.getElementById('content').innerHTML = `
+    <div style="padding:48px 24px 32px;text-align:center;">
+      <div style="margin-bottom:16px;">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto;display:block"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M8 10v11M12 10v11M16 10v11M20 10v11"/></svg>
+      </div>
+      <div style="font-size:20px;font-weight:700;color:#0f172a;letter-spacing:-0.5px;margin-bottom:8px;">Welcome to Flowr</div>
+      <div style="font-size:13px;color:#64748b;line-height:1.6;margin-bottom:10px;">
+        See exactly where your money goes — and when.<br>
+      </div>
+      <div style="font-size:12px;color:#94a3b8;line-height:1.7;margin-bottom:28px;text-align:left;background:#f8fafc;border-radius:10px;padding:14px 16px;">
+        <strong style="color:#475569;display:block;margin-bottom:6px;">Recommended setup order:</strong>
+        1. Add your bank account &amp; starting balance<br>
+        2. Add credit cards (name + due date)<br>
+        3. Add income sources<br>
+        4. Add bills &amp; subscriptions
+      </div>
+      <button onclick="openPaymentSheet(null)" style="
+        background:#0f172a;color:#fff;border:none;border-radius:12px;
+        padding:14px 32px;font-size:14px;font-weight:700;
+        font-family:'DM Sans',sans-serif;cursor:pointer;
+        box-shadow:0 4px 14px rgba(15,23,42,0.25);width:100%;margin-bottom:10px;
+      ">Add Bank Account</button>
+      <div>
+        <button onclick="skipOnboarding()" style="
+          background:none;border:none;color:#94a3b8;
+          font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;
+        ">Skip for now</button>
+      </div>
+    </div>
+  `;
+}
+
+function openOnboardingBalance() {
+  openPaymentSheet(null);
+}
+
+function skipOnboarding() {
+  render();
+}
+
+// ══════════════════════════════════════════
+//  Toast
+// ══════════════════════════════════════════
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ══════════════════════════════════════════
+//  Boot
+// ══════════════════════════════════════════
+(async () => {
+  await openDB();
+  entries = await dbGetAll('entries');
+  const hasStart = entries.some(e => e.type === 'start');
+  if (!entries.length || !hasStart) {
+    updateHeader();
+    showOnboarding();
+  } else {
+    render();
+  }
+})();
+</script>
+
+</body>
+</html>
