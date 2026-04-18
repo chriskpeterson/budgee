@@ -583,13 +583,54 @@ function buildTimeline(){
   const startEntry=entries.find(e=>e.type==='start');
   const startBal=startEntry?startEntry.amount:0;
   const cards=entries.filter(e=>e.type==='card');
-  const recurring=entries.filter(e=>e.type==='income'||e.type==='bill'||e.type==='buffer');
+  const cardIds=new Set(cards.map(c=>String(c.id)));
   const events=[];
+
   events.push({day:1,label:'Starting Balance',type:'start',amount:startBal,entryId:startEntry?startEntry.id:'start',isPass:false});
-  recurring.forEach(e=>events.push({day:parseInt(e.day)||1,label:e.label,type:e.type,amount:e.type==='income'?e.amount:-Math.abs(e.amount),entryId:e.id,isPass:false,required:e.required||false,isSub:e.isSub||false,payment:e.payment||'bank'}));
-  cards.forEach(card=>{const assigned=entries.filter(e=>(e.type==='bill'||e.type==='buffer')&&e.payment===String(card.id));const total=assigned.reduce((s,e)=>s+Math.abs(e.amount),0);if(total>0){events.push({day:parseInt(card.day)||1,label:card.label,type:'card',amount:-total,entryId:card.id,isPass:false,expandItems:assigned.map(a=>[a.label,fmt(a.amount)])});assigned.forEach(a=>events.push({day:parseInt(a.day)||1,label:a.label,type:'pass',amount:-Math.abs(a.amount),entryId:a.id,isPass:true,via:card.label,isSub:a.isSub||false}))}});
-  events.sort((a,b)=>{if(a.day!==b.day)return a.day-b.day;const o={start:0,income:1,bill:2,buffer:3,card:4,pass:5};return(o[a.type]??5)-(o[b.type]??5)});
-  let bal=0;let lastRealBal=0;events.forEach(ev=>{if(!ev.isPass){bal+=ev.amount;ev.balance=bal;lastRealBal=bal}else{ev.balance=lastRealBal}});
+
+  // Direct bank bills/buffers only — skip anything assigned to a card
+  entries.filter(e=>(e.type==='income'||e.type==='bill'||e.type==='buffer')).forEach(e=>{
+    const onCard = (e.type==='bill'||e.type==='buffer') && cardIds.has(String(e.payment));
+    if(onCard) return; // handled below via the card's due date
+    events.push({
+      day:parseInt(e.day)||1, label:e.label, type:e.type,
+      amount:e.type==='income'?e.amount:-Math.abs(e.amount),
+      entryId:e.id, isPass:false,
+      required:e.required||false, isSub:e.isSub||false, payment:e.payment||'bank'
+    });
+  });
+
+  // Each card: one real cash event on the due date, individual charges shown as informational pass rows
+  cards.forEach(card=>{
+    const assigned=entries.filter(e=>(e.type==='bill'||e.type==='buffer')&&e.payment===String(card.id));
+    const total=assigned.reduce((s,e)=>s+Math.abs(e.amount),0);
+    if(!total) return;
+    // The single real deduction — hits cash on the card's due date
+    events.push({
+      day:parseInt(card.day)||1, label:card.label, type:'card',
+      amount:-total, entryId:card.id, isPass:false,
+      expandItems:assigned.map(a=>[a.label, fmt(a.amount)])
+    });
+    // Informational rows: show each charge on the day it posts, but marked isPass
+    // so they do NOT move the running balance
+    assigned.forEach(a=>events.push({
+      day:parseInt(a.day)||1, label:a.label, type:'pass',
+      amount:-Math.abs(a.amount), entryId:a.id, isPass:true,
+      via:card.label, isSub:a.isSub||false
+    }));
+  });
+
+  events.sort((a,b)=>{
+    if(a.day!==b.day) return a.day-b.day;
+    const o={start:0,income:1,bill:2,buffer:3,card:4,pass:5};
+    return (o[a.type]??5)-(o[b.type]??5);
+  });
+
+  let bal=0, lastRealBal=0;
+  events.forEach(ev=>{
+    if(!ev.isPass){bal+=ev.amount;ev.balance=bal;lastRealBal=bal;}
+    else{ev.balance=lastRealBal;}
+  });
   return events;
 }
 
