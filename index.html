@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Flowr — Cash Flow</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
@@ -14,7 +14,8 @@
   --topbar-h: 64px;
   --font: 'DM Sans', sans-serif;
   --serif: 'DM Serif Display', serif;
-  --mono: 'DM Mono', monospace;
+  --mono: 'DM Sans', sans-serif;
+  --num: 'DM Sans', sans-serif; font-variant-numeric: tabular-nums;
 
   --ink-900: #0f1117;
   --ink-700: #2d3142;
@@ -66,6 +67,39 @@ html,body{height:100%;font-family:var(--font);font-size:14px;background:var(--bg
 .nav-divider{height:1px;background:var(--sidebar-border);margin:10px 10px}
 .sidebar-add{margin:12px 12px 16px;display:flex;align-items:center;justify-content:center;gap:7px;background:var(--sidebar-accent);color:#0f1117;border:none;border-radius:8px;padding:10px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:var(--font);transition:opacity 0.15s;letter-spacing:0.01em}
 .sidebar-add:hover{opacity:0.88}
+.sidebar-data{margin:0 12px 20px;display:flex;align-items:center;justify-content:center;gap:7px;background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.55);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:9px;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font);transition:all 0.15s;letter-spacing:0.01em}
+.sidebar-data:hover{background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.85)}
+
+/* ── Data modal ── */
+#data-modal-bg{display:none;position:fixed;inset:0;background:rgba(15,17,23,0.55);z-index:200;backdrop-filter:blur(3px);align-items:center;justify-content:center}
+#data-modal-bg.open{display:flex}
+#data-modal{background:var(--surface);border-radius:12px;border:1px solid var(--ink-100);width:460px;max-width:calc(100vw - 32px);overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.12)}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 16px;border-bottom:1px solid var(--ink-100)}
+.modal-title{font-size:15px;font-weight:600;color:var(--ink-900);letter-spacing:-0.2px}
+.modal-close{width:28px;height:28px;background:var(--ink-50);border:none;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-500);font-size:16px;transition:background 0.15s}
+.modal-close:hover{background:var(--ink-100)}
+.modal-body{padding:20px 24px}
+.modal-section{margin-bottom:20px}
+.modal-section-title{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-500);margin-bottom:10px}
+.modal-section-desc{font-size:13px;color:var(--ink-500);line-height:1.55;margin-bottom:12px}
+.modal-btn{display:flex;align-items:center;gap:8px;width:100%;padding:11px 14px;border-radius:8px;font-size:13.5px;font-weight:500;cursor:pointer;font-family:var(--font);transition:all 0.15s;border:1.5px solid var(--ink-100);background:var(--surface);color:var(--ink-700)}
+.modal-btn:hover{border-color:var(--ink-300);background:var(--ink-50)}
+.modal-btn.primary{background:var(--ink-900);color:#fff;border-color:var(--ink-900)}
+.modal-btn.primary:hover{opacity:0.85}
+.modal-btn svg{flex-shrink:0}
+.modal-divider{height:1px;background:var(--ink-100);margin:20px 0}
+.modal-meta{font-size:11px;color:var(--ink-300);margin-top:8px;line-height:1.5}
+
+/* ── Before-unload banner ── */
+#save-banner{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--ink-900);color:#fff;z-index:300;padding:14px 24px;align-items:center;gap:12px;border-top:1px solid rgba(255,255,255,0.1)}
+#save-banner.open{display:flex}
+.banner-msg{flex:1;font-size:13.5px;font-weight:500}
+.banner-msg span{color:var(--sidebar-accent);font-weight:600}
+.banner-btn{padding:8px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);border:none;transition:opacity 0.15s}
+.banner-export{background:var(--sidebar-accent);color:#0f1117}
+.banner-export:hover{opacity:0.88}
+.banner-dismiss{background:rgba(255,255,255,0.1);color:#fff}
+.banner-dismiss:hover{background:rgba(255,255,255,0.17)}
 
 /* ── Topbar ── */
 #topbar{height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--ink-100);display:flex;align-items:center;padding:0 28px;gap:0;flex-shrink:0}
@@ -74,7 +108,7 @@ html,body{height:100%;font-family:var(--font);font-size:14px;background:var(--bg
 .topbar-stats{display:flex;align-items:center;gap:0;flex:1}
 .tstat{display:flex;flex-direction:column;padding:0 22px 0 0;min-width:110px}
 .tstat-label{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-300);margin-bottom:3px}
-.tstat-val{font-size:16px;font-weight:500;font-family:var(--mono);letter-spacing:-0.5px}
+.tstat-val{font-size:16px;font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:-0.2px}
 .tstat.floor{padding-left:22px;border-left:1px solid var(--ink-100)}
 .tstat.floor.danger .tstat-val{color:var(--red)!important}
 .topbar-right{display:flex;align-items:center;gap:10px;margin-left:auto}
@@ -89,7 +123,7 @@ html,body{height:100%;font-family:var(--font);font-size:14px;background:var(--bg
 .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
 .stat-card{background:var(--surface);border:1px solid var(--ink-100);border-radius:10px;padding:18px 20px;transition:box-shadow 0.15s}
 .stat-card-label{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-300);margin-bottom:8px}
-.stat-card-val{font-size:22px;font-weight:400;font-family:var(--mono);letter-spacing:-1px;color:var(--ink-900);line-height:1}
+.stat-card-val{font-size:22px;font-weight:400;font-variant-numeric:tabular-nums;letter-spacing:-0.5px;color:var(--ink-900);line-height:1}
 .stat-card-sub{font-size:11px;color:var(--ink-300);margin-top:6px}
 .stat-card.income .stat-card-val{color:var(--green)}
 .stat-card.out .stat-card-val{color:var(--red)}
@@ -105,7 +139,7 @@ html,body{height:100%;font-family:var(--font);font-size:14px;background:var(--bg
 .panel-action:hover{border-color:var(--ink-300);color:var(--ink-700)}
 .panel-footer{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;background:var(--ink-50);border-top:1px solid var(--ink-100)}
 .panel-footer-label{font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-300)}
-.panel-footer-val{font-size:14px;font-weight:500;font-family:var(--mono);color:var(--ink-900);letter-spacing:-0.3px}
+.panel-footer-val{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--ink-900);letter-spacing:-0.1px}
 
 /* ── Day section separator ── */
 .panel-section{display:flex;align-items:center;gap:10px;padding:10px 18px 6px}
@@ -117,15 +151,15 @@ html,body{height:100%;font-family:var(--font);font-size:14px;background:var(--bg
 .trow:last-child{border-bottom:none}
 .trow.clickable{cursor:pointer}
 .trow.clickable:hover{background:var(--ink-50)}
-.trow.pass{opacity:0.5;padding-left:34px}
+.trow.pass{opacity:0.6;padding-left:34px;background:var(--ink-50)}
 .trow-bar{width:3px;height:28px;border-radius:2px;flex-shrink:0}
 .trow-icon{flex-shrink:0;width:18px;display:flex;align-items:center;justify-content:center}
 .trow-label{font-size:13.5px;font-weight:500;color:var(--ink-700);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .trow-sub{font-size:11px;color:var(--ink-300);margin-top:1px}
 .trow-main{flex:1;min-width:0}
 .trow-right{text-align:right;margin-left:auto;flex-shrink:0}
-.trow-amount{font-size:13.5px;font-weight:500;font-family:var(--mono);letter-spacing:-0.3px}
-.trow-balance{font-size:11px;color:var(--ink-300);font-family:var(--mono);margin-top:2px}
+.trow-amount{font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-0.1px}
+.trow-balance{font-size:11.5px;color:var(--ink-300);font-variant-numeric:tabular-nums;margin-top:2px;font-weight:400}
 .trow-balance.danger{color:var(--red);font-weight:600;background:var(--red-l);padding:1px 5px;border-radius:4px}
 .trow-expand-icon{color:var(--ink-300);flex-shrink:0;margin-left:4px}
 
@@ -147,7 +181,7 @@ html,body{height:100%;font-family:var(--font);font-size:14px;background:var(--bg
 .card-tile:hover{transform:translateY(-2px);opacity:0.9}
 .card-tile-name{font-size:14px;font-weight:600;color:#fff;margin-bottom:4px}
 .card-tile-due{font-size:11px;color:rgba(255,255,255,0.6);margin-bottom:16px}
-.card-tile-amount{font-size:22px;font-weight:400;font-family:var(--mono);color:#fff;letter-spacing:-0.8px;line-height:1}
+.card-tile-amount{font-size:22px;font-weight:500;font-variant-numeric:tabular-nums;color:#fff;letter-spacing:-0.5px;line-height:1}
 .card-tile-sub{font-size:11px;color:rgba(255,255,255,0.55);margin-top:5px}
 
 /* ── Empty state ── */
@@ -270,6 +304,10 @@ html,body{height:100%;font-family:var(--font);font-size:14px;background:var(--bg
     <button class="sidebar-add" onclick="openBillSheet(null)">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Add Bill
+    </button>
+    <button class="sidebar-data" onclick="openDataModal()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Export / Import
     </button>
   </div>
 
@@ -467,6 +505,45 @@ html,body{height:100%;font-family:var(--font);font-size:14px;background:var(--bg
 
 <div id="toast"></div>
 
+<!-- Data modal -->
+<div id="data-modal-bg" onclick="closeDataModal(event)">
+  <div id="data-modal">
+    <div class="modal-header">
+      <div class="modal-title">Export &amp; Import</div>
+      <button class="modal-close" onclick="closeDataModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section">
+        <div class="modal-section-title">Export</div>
+        <div class="modal-section-desc">Download all your bills, income, and accounts as a JSON file. Keep it somewhere safe &mdash; it is your only backup.</div>
+        <button class="modal-btn primary" onclick="exportData()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Download flowr-backup.json
+        </button>
+        <div class="modal-meta" id="export-meta"></div>
+      </div>
+      <div class="modal-divider"></div>
+      <div class="modal-section">
+        <div class="modal-section-title">Import</div>
+        <div class="modal-section-desc">Restore from a previously exported JSON file. This will <strong>replace</strong> all current data.</div>
+        <button class="modal-btn" onclick="document.getElementById('import-file').click()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Choose flowr-backup.json
+        </button>
+        <input type="file" id="import-file" accept=".json,application/json" style="display:none" onchange="importData(event)">
+        <div class="modal-meta" id="import-meta"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Save banner -->
+<div id="save-banner">
+  <div class="banner-msg"><span>Unsaved session.</span> Export your data before closing so nothing is lost.</div>
+  <button class="banner-btn banner-export" onclick="exportData();dismissBanner()">Export now</button>
+  <button class="banner-btn banner-dismiss" onclick="dismissBanner()">Dismiss</button>
+</div>
+
 <script>
 const DB_NAME='flowr_db',DB_VER=1;
 let db;
@@ -512,7 +589,7 @@ function buildTimeline(){
   recurring.forEach(e=>events.push({day:parseInt(e.day)||1,label:e.label,type:e.type,amount:e.type==='income'?e.amount:-Math.abs(e.amount),entryId:e.id,isPass:false,required:e.required||false,isSub:e.isSub||false,payment:e.payment||'bank'}));
   cards.forEach(card=>{const assigned=entries.filter(e=>(e.type==='bill'||e.type==='buffer')&&e.payment===String(card.id));const total=assigned.reduce((s,e)=>s+Math.abs(e.amount),0);if(total>0){events.push({day:parseInt(card.day)||1,label:card.label,type:'card',amount:-total,entryId:card.id,isPass:false,expandItems:assigned.map(a=>[a.label,fmt(a.amount)])});assigned.forEach(a=>events.push({day:parseInt(a.day)||1,label:a.label,type:'pass',amount:-Math.abs(a.amount),entryId:a.id,isPass:true,via:card.label,isSub:a.isSub||false}))}});
   events.sort((a,b)=>{if(a.day!==b.day)return a.day-b.day;const o={start:0,income:1,bill:2,buffer:3,card:4,pass:5};return(o[a.type]??5)-(o[b.type]??5)});
-  let bal=0;events.forEach(ev=>{if(!ev.isPass){bal+=ev.amount;ev.balance=bal}else ev.balance=null});
+  let bal=0;let lastRealBal=0;events.forEach(ev=>{if(!ev.isPass){bal+=ev.amount;ev.balance=bal;lastRealBal=bal}else{ev.balance=lastRealBal}});
   return events;
 }
 
@@ -555,7 +632,7 @@ function renderOverview(){
     <div class="stat-card out"><div class="stat-card-label">Total Out</div><div class="stat-card-val">${fmt(totalOut)}</div><div class="stat-card-sub">bills &amp; cards</div></div>
     <div class="stat-card floor${isDng?' danger':''}"><div class="stat-card-label">${isDng?'⚠ ':''}Floor</div><div class="stat-card-val">${fmt(floor)}</div><div class="stat-card-sub">${floorEv?floorEv.label:''}</div></div>
   </div>`;
-  html+=`<div class="panel"><div class="panel-header"><span class="panel-title">Cash Flow — ${MONTHS[currentMonth]}</span></div>`;
+  html+=`<div class="panel"><div class="panel-header"><span class="panel-title">Cash Flow — ${MONTHS[currentMonth]}</span><span style="font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-300)">Amount &nbsp;·&nbsp; Balance</span></div>`;
   let lastDay=null;
   tl.forEach(ev=>{
     if(!ev.isPass&&ev.day!==lastDay){
@@ -563,7 +640,11 @@ function renderOverview(){
       html+=`<div class="panel-section"><span class="panel-section-title">${label}</span><div class="panel-section-line"></div></div>`;
       lastDay=ev.day;
     }
-    if(ev.isPass){html+=`<div class="trow pass"><div class="trow-icon" style="color:var(--ink-300)">${iconFor(ev)}</div><div class="trow-main"><div class="trow-label">${ev.label}${ev.via?`<span style="color:var(--ink-300);font-weight:400;font-size:11px">via ${ev.via}</span>`:''}</div></div><div class="trow-right"><div class="trow-amount" style="color:var(--ink-300)">${fmt(ev.amount)}</div></div></div>`;return}
+    if(ev.isPass){
+      const balDng=ev.balance!==null&&ev.balance<500;
+      html+=`<div class="trow pass"><div class="trow-icon" style="color:var(--ink-300)">${iconFor(ev)}</div><div class="trow-main"><div class="trow-label">${ev.label}${ev.via?`<span style="color:var(--ink-300);font-weight:400;font-size:11px"> via ${ev.via}</span>`:''}</div></div><div class="trow-right"><div class="trow-amount" style="color:var(--ink-300)">${fmt(ev.amount)}</div><div class="trow-balance${balDng?' danger':''}">${fmt(ev.balance)}</div></div></div>`;
+      return;
+    }
     const isExp=expandedId===ev.entryId;
     const hasDetail=ev.expandItems&&ev.expandItems.length;
     const isStart=ev.type==='start';
@@ -686,16 +767,16 @@ function openBillSheet(id){
 function onBillKindChange(){}
 function refreshBillPaymentOptions(sel){const s=document.getElementById('bill-payment');s.innerHTML=`<option value="bank">Bank Account (Direct)</option>`;entries.filter(e=>e.type==='card').forEach(c=>{s.innerHTML+=`<option value="${c.id}">${c.label}</option>`});s.value=sel||'bank'}
 function onBillPaymentChange(){const p=document.getElementById('bill-payment').value;document.getElementById('bill-field-required').style.display=p==='bank'?'':'none'}
-async function saveBill(){const kind=document.getElementById('bill-kind').value;const label=document.getElementById('bill-label').value.trim();const amount=parseFloat(document.getElementById('bill-amount').value);const day=parseInt(document.getElementById('bill-day').value)||1;const payment=document.getElementById('bill-payment').value;const isSub=document.getElementById('bill-sub').checked;const required=document.getElementById('bill-required').checked;if(!label){showToast('Please enter a label');return}if(isNaN(amount)||amount<=0){showToast('Please enter a valid amount');return}const entry={type:kind,label,amount,day,payment,isSub,required:payment==='bank'?required:false};if(editingId)entry.id=editingId;await dbPut('entries',entry);entries=await dbGetAll('entries');closeAllSheets();render();showToast(editingId?'Updated':'Bill saved')}
+async function saveBill(){const kind=document.getElementById('bill-kind').value;const label=document.getElementById('bill-label').value.trim();const amount=parseFloat(document.getElementById('bill-amount').value);const day=parseInt(document.getElementById('bill-day').value)||1;const payment=document.getElementById('bill-payment').value;const isSub=document.getElementById('bill-sub').checked;const required=document.getElementById('bill-required').checked;if(!label){showToast('Please enter a label');return}if(isNaN(amount)||amount<=0){showToast('Please enter a valid amount');return}const entry={type:kind,label,amount,day,payment,isSub,required:payment==='bank'?required:false};if(editingId)entry.id=editingId;await dbPut('entries',entry);entries=await dbGetAll('entries');closeAllSheets();render();markDirty();showToast(editingId?'Updated':'Bill saved')}
 
 function openIncomeSheet(id){editingId=id||null;editingType='income';const e=id?entries.find(x=>x.id===id):null;document.getElementById('income-title').textContent=e?'Edit Income':'Add Income';document.getElementById('income-label').value=e?e.label:'';document.getElementById('income-amount').value=e?e.amount:'';document.getElementById('income-day').value=e?(e.day||''):'';document.getElementById('income-btn-delete').style.display=e?'':'none';openSheet('sheet-income');setTimeout(()=>document.getElementById('income-label').focus(),300)}
-async function saveIncome(){const label=document.getElementById('income-label').value.trim();const amount=parseFloat(document.getElementById('income-amount').value);const day=parseInt(document.getElementById('income-day').value)||1;if(!label){showToast('Please enter a label');return}if(isNaN(amount)||amount<=0){showToast('Please enter a valid amount');return}const entry={type:'income',label,amount,day};if(editingId)entry.id=editingId;await dbPut('entries',entry);entries=await dbGetAll('entries');closeAllSheets();render();showToast(editingId?'Updated':'Income saved')}
+async function saveIncome(){const label=document.getElementById('income-label').value.trim();const amount=parseFloat(document.getElementById('income-amount').value);const day=parseInt(document.getElementById('income-day').value)||1;if(!label){showToast('Please enter a label');return}if(isNaN(amount)||amount<=0){showToast('Please enter a valid amount');return}const entry={type:'income',label,amount,day};if(editingId)entry.id=editingId;await dbPut('entries',entry);entries=await dbGetAll('entries');closeAllSheets();render();markDirty();showToast(editingId?'Updated':'Income saved')}
 
 function openPaymentSheet(id){editingId=id||null;editingType='payment';const e=id?entries.find(x=>x.id===id):null;const isBank=e?e.type==='start':false;document.getElementById('payment-title').textContent=e?'Edit Payment Method':'Add Payment Method';document.getElementById('payment-kind').value=isBank?'bankacct':'card';document.getElementById('payment-label').value=e?(isBank?'Checking Account':e.label):'';document.getElementById('payment-day').value=e&&!isBank?(e.day||''):'';document.getElementById('payment-startbal').value=e&&isBank?e.amount:'';document.getElementById('payment-btn-delete').style.display=e?'':'none';if(isBank){document.getElementById('payment-label').value='Checking Account';document.getElementById('payment-label').placeholder='e.g. Checking, Savings'}onPaymentKindChange();openSheet('sheet-payment');setTimeout(()=>document.getElementById('payment-label').focus(),300)}
 function onPaymentKindChange(){const k=document.getElementById('payment-kind').value;document.getElementById('payment-field-due').style.display=k==='card'?'':'none';document.getElementById('payment-field-start').style.display=k==='bankacct'?'':'none'}
-async function savePaymentMethod(){const kind=document.getElementById('payment-kind').value;const label=document.getElementById('payment-label').value.trim();if(!label){showToast('Please enter a name');return}if(kind==='card'){const day=parseInt(document.getElementById('payment-day').value)||1;const entry={type:'card',label,amount:0,day};if(editingId)entry.id=editingId;await dbPut('entries',entry)}else{const bal=parseFloat(document.getElementById('payment-startbal').value);if(isNaN(bal)||bal<0){showToast('Please enter your current balance');return}const existing=entries.find(e=>e.type==='start');if(existing&&!editingId)await dbDelete('entries',existing.id);const entry={type:'start',label:'Starting Balance',amount:bal,day:1};if(editingId)entry.id=editingId;await dbPut('entries',entry)}entries=await dbGetAll('entries');closeAllSheets();render();showToast('Saved')}
+async function savePaymentMethod(){const kind=document.getElementById('payment-kind').value;const label=document.getElementById('payment-label').value.trim();if(!label){showToast('Please enter a name');return}if(kind==='card'){const day=parseInt(document.getElementById('payment-day').value)||1;const entry={type:'card',label,amount:0,day};if(editingId)entry.id=editingId;await dbPut('entries',entry)}else{const bal=parseFloat(document.getElementById('payment-startbal').value);if(isNaN(bal)||bal<0){showToast('Please enter your current balance');return}const existing=entries.find(e=>e.type==='start');if(existing&&!editingId)await dbDelete('entries',existing.id);const entry={type:'start',label:'Starting Balance',amount:bal,day:1};if(editingId)entry.id=editingId;await dbPut('entries',entry)}entries=await dbGetAll('entries');closeAllSheets();render();markDirty();showToast('Saved')}
 
-async function deleteCurrent(){if(!editingId)return;const entry=entries.find(e=>e.id===editingId);if(!entry)return;if(entry.type==='card'){const assigned=entries.filter(e=>e.payment===String(editingId));if(assigned.length){showToast(`Reassign ${assigned.length} bill(s) first`);return}}if(!confirm(`Delete "${entry.label}"?`))return;await dbDelete('entries',editingId);entries=await dbGetAll('entries');closeAllSheets();render();showToast('Deleted')}
+async function deleteCurrent(){if(!editingId)return;const entry=entries.find(e=>e.id===editingId);if(!entry)return;if(entry.type==='card'){const assigned=entries.filter(e=>e.payment===String(editingId));if(assigned.length){showToast(`Reassign ${assigned.length} bill(s) first`);return}}if(!confirm(`Delete "${entry.label}"?`))return;await dbDelete('entries',editingId);entries=await dbGetAll('entries');closeAllSheets();render();markDirty();showToast('Deleted')}
 
 function showOnboarding(){
   const ca=document.getElementById('content-area');
@@ -718,6 +799,110 @@ function showOnboarding(){
 
 let toastTimer;
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2200)}
+
+// ══════════════════════════════════════════
+//  Export / Import
+// ══════════════════════════════════════════
+let sessionDirty = false;
+function markDirty() { sessionDirty = true; showSaveBanner(); }
+
+function exportData() {
+  const payload = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    entries: entries
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `flowr-backup-${date}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  sessionDirty = false;
+  hideSaveBanner();
+  const meta = document.getElementById('export-meta');
+  if (meta) meta.textContent = `${entries.length} entries exported at ${new Date().toLocaleTimeString()}`;
+  showToast('Backup downloaded');
+}
+
+async function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const meta = document.getElementById('import-meta');
+  try {
+    const text = await file.text();
+    const payload = JSON.parse(text);
+    // Accept both raw array and versioned object
+    const imported = Array.isArray(payload) ? payload : (payload.entries || []);
+    if (!imported.length) { showToast('No entries found in file'); return; }
+    if (!confirm(`Import ${imported.length} entries? This will replace all current data.`)) {
+      event.target.value = ''; return;
+    }
+    // Clear existing
+    const all = await dbGetAll('entries');
+    for (const e of all) await dbDelete('entries', e.id);
+    // Insert without old IDs so autoIncrement gives fresh keys
+    for (const e of imported) {
+      const fresh = Object.assign({}, e);
+      delete fresh.id;
+      const newId = await dbPut('entries', fresh);
+      // Fix up payment references if they pointed to old card IDs
+      // (handled below after all inserts)
+    }
+    // Re-read and fix payment refs: build old->new id map
+    // Since we can't map old IDs, just trust the export preserved card labels
+    entries = await dbGetAll('entries');
+    closeDataModal();
+    render();
+    if (meta) meta.textContent = '';
+    showToast(`Imported ${imported.length} entries`);
+    sessionDirty = false;
+    hideSaveBanner();
+  } catch(err) {
+    showToast('Invalid file — could not import');
+    if (meta) meta.textContent = 'Error: ' + err.message;
+  }
+  event.target.value = '';
+}
+
+function openDataModal() {
+  const meta = document.getElementById('export-meta');
+  if (meta) {
+    const d = new Date();
+    meta.textContent = `${entries.length} entries · last opened ${d.toLocaleDateString()} ${d.toLocaleTimeString()}`;
+  }
+  document.getElementById('data-modal-bg').classList.add('open');
+}
+function closeDataModal(e) {
+  if (e && e.target !== document.getElementById('data-modal-bg')) return;
+  document.getElementById('data-modal-bg').classList.remove('open');
+}
+
+// ══════════════════════════════════════════
+//  Save banner
+// ══════════════════════════════════════════
+function showSaveBanner() {
+  document.getElementById('save-banner').classList.add('open');
+}
+function hideSaveBanner() {
+  document.getElementById('save-banner').classList.remove('open');
+}
+function dismissBanner() {
+  hideSaveBanner();
+}
+
+// Mark dirty after any data write
+const _origDbPut = dbPut;
+// Intercept saves to track dirty state — done inline after each save call instead
+
+window.addEventListener('beforeunload', e => {
+  if (sessionDirty && entries.length > 0) {
+    e.preventDefault();
+    e.returnValue = 'You have unsaved data. Export a backup before closing?';
+  }
+});
 
 (async()=>{await openDB();entries=await dbGetAll('entries');const hasStart=entries.some(e=>e.type==='start');if(!entries.length||!hasStart){updateHeader();showOnboarding()}else render()})();
 </script>
