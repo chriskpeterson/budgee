@@ -70,7 +70,19 @@ html,body{height:100%;font-family:var(--font);font-size:14px;background:var(--bg
 .sidebar-data{margin:0 12px 20px;display:flex;align-items:center;justify-content:center;gap:7px;background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.55);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:9px;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font);transition:all 0.15s;letter-spacing:0.01em}
 .sidebar-data:hover{background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.85)}
 
-/* ── Data modal ── */
+/* ── Cash flow chart ── */
+.chart-panel{background:var(--surface);border:1px solid var(--ink-100);border-radius:10px;overflow:hidden;margin-bottom:14px}
+.chart-header{display:flex;align-items:flex-start;justify-content:space-between;padding:16px 20px 0}
+.chart-title{font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-500)}
+.chart-disclaimer{font-size:11px;color:var(--ink-300);font-style:italic;margin-top:2px}
+.chart-legend{display:flex;align-items:center;gap:14px;flex-shrink:0}
+.chart-legend-item{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;color:var(--ink-400)}
+.chart-legend-dot{width:8px;height:8px;border-radius:50%}
+.chart-wrap{padding:12px 20px 16px;overflow:hidden}
+.chart-svg{width:100%;display:block}
+.chart-tooltip{pointer-events:none;position:absolute;background:var(--ink-900);color:#fff;border-radius:7px;padding:8px 12px;font-size:12px;line-height:1.6;white-space:nowrap;z-index:50;opacity:0;transition:opacity 0.1s;box-shadow:0 4px 12px rgba(0,0,0,0.2)}
+.chart-tooltip b{font-weight:600;font-size:13px}
+.chart-outer{position:relative}
 #data-modal-bg{display:none;position:fixed;inset:0;background:rgba(15,17,23,0.55);z-index:200;backdrop-filter:blur(3px);align-items:center;justify-content:center}
 #data-modal-bg.open{display:flex}
 #data-modal{background:var(--surface);border-radius:12px;border:1px solid var(--ink-100);width:460px;max-width:calc(100vw - 32px);overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.12)}
@@ -657,22 +669,202 @@ function updateHeader(){
 const TYPE_COLOR={income:'var(--green)',bill:'var(--red)',card:'var(--blue)',buffer:'var(--amber)',start:'var(--ink-500)',pass:'var(--ink-300)'};
 const TYPE_BAR={income:'#0f7a55',bill:'#c0392b',card:'#1a56a5',buffer:'#b07d1c',start:'#9aa0b4',pass:'transparent'};
 
+function buildChartSVG(tl) {
+  // Collect one point per day-change in the timeline (non-pass only)
+  // plus day 1 start and day 31 end for a full-month picture
+  const W = 860, H = 200, PL = 56, PR = 16, PT = 16, PB = 36;
+  const cW = W - PL - PR, cH = H - PT - PB;
+
+  // Build day→balance map across all 31 days
+  const dayBal = {};
+  const realEvs = tl.filter(e=>!e.isPass && e.balance !== null);
+  if (!realEvs.length) return '';
+
+  // Fill every day 1–31 by stepping through events
+  let cursor = realEvs[0].balance; // starting balance after day-1 entries
+  for (let d = 1; d <= 31; d++) {
+    // Apply all events on this day
+    const eventsToday = realEvs.filter(e => e.day === d);
+    if (eventsToday.length) cursor = eventsToday[eventsToday.length-1].balance;
+    dayBal[d] = cursor;
+  }
+
+  const allBals = Object.values(dayBal);
+  const minB = Math.min(...allBals);
+  const maxB = Math.max(...allBals);
+  const pad  = (maxB - minB) * 0.12 || 200;
+  const lo   = Math.min(minB - pad, 0);
+  const hi   = maxB + pad;
+  const range = hi - lo || 1;
+
+  const xOf = d => PL + ((d - 1) / 30) * cW;
+  const yOf = b => PT + (1 - (b - lo) / range) * cH;
+
+  // Build polyline points
+  const pts = [];
+  for (let d = 1; d <= 31; d++) pts.push([xOf(d), yOf(dayBal[d])]);
+
+  const polyPts = pts.map(p => p.join(',')).join(' ');
+
+  // Area fill path (close under the x-axis baseline or bottom)
+  const baseY = Math.min(yOf(0), PT + cH); // y position of $0 line or bottom
+  const areaPath = `M${pts[0][0]},${pts[0][1]} ` +
+    pts.slice(1).map(p=>`L${p[0]},${p[1]}`).join(' ') +
+    ` L${pts[pts.length-1][0]},${baseY} L${pts[0][0]},${baseY} Z`;
+
+  // Zero line (only if 0 is in view)
+  const zeroY = yOf(0);
+  const showZero = zeroY > PT && zeroY < PT + cH;
+
+  // Floor line
+  const floorY = yOf(minB);
+  const floorX = xOf(realEvs.find(e=>e.balance===minB)?.day || 1);
+
+  // Y axis labels (4 ticks)
+  const ticks = 4;
+  const yLabels = [];
+  for (let i = 0; i <= ticks; i++) {
+    const val = lo + (range * i / ticks);
+    const y = yOf(val);
+    if (y < PT - 2 || y > PT + cH + 2) continue;
+    yLabels.push({ val, y });
+  }
+
+  // X axis: just a few day labels
+  const xLabels = [1, 8, 15, 22, 31];
+
+  // Event dots — one per real non-start, non-pass event
+  const dots = realEvs.filter(e=>e.type!=='start').map(e=>{
+    const x = xOf(e.day), y = yOf(e.balance);
+    const col = e.type==='income' ? '#0f7a55' : e.type==='card' ? '#1a56a5' : '#c0392b';
+    return { x, y, col, ev: e };
+  });
+
+  // Unique dots per day (stack same-day events to last balance)
+  const dotsByDay = {};
+  dots.forEach(d => { dotsByDay[d.ev.day] = d; });
+  const finalDots = Object.values(dotsByDay);
+
+  let svg = `<svg class="chart-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" id="cf-chart">
+  <defs>
+    <linearGradient id="cfGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a56a5" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#1a56a5" stop-opacity="0.02"/>
+    </linearGradient>
+    <clipPath id="cfClip"><rect x="${PL}" y="${PT}" width="${cW}" height="${cH}"/></clipPath>
+  </defs>`;
+
+  // Grid lines
+  yLabels.forEach(({y}) => {
+    svg += `<line x1="${PL}" y1="${y}" x2="${PL+cW}" y2="${y}" stroke="#e8eaf0" stroke-width="1"/>`;
+  });
+
+  // Zero line
+  if (showZero) {
+    svg += `<line x1="${PL}" y1="${zeroY}" x2="${PL+cW}" y2="${zeroY}" stroke="#9aa0b4" stroke-width="1" stroke-dasharray="4,3"/>`;
+  }
+
+  // Area fill
+  svg += `<path d="${areaPath}" fill="url(#cfGrad)" clip-path="url(#cfClip)"/>`;
+
+  // Main line
+  svg += `<polyline points="${polyPts}" fill="none" stroke="#1a56a5" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" clip-path="url(#cfClip)"/>`;
+
+  // Floor indicator
+  svg += `<line x1="${PL}" y1="${floorY}" x2="${PL+cW}" y2="${floorY}" stroke="#c0392b" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>`;
+  svg += `<text x="${PL+4}" y="${floorY-4}" font-size="9" fill="#c0392b" opacity="0.7" font-family="DM Sans,sans-serif">low</text>`;
+
+  // Y axis labels
+  yLabels.forEach(({val, y}) => {
+    const label = Math.abs(val) >= 1000 ? `$${(val/1000).toFixed(1)}k` : `$${Math.round(val)}`;
+    svg += `<text x="${PL-6}" y="${y+4}" font-size="10" fill="#9aa0b4" text-anchor="end" font-family="DM Sans,sans-serif">${label}</text>`;
+  });
+
+  // X axis labels
+  xLabels.forEach(d => {
+    svg += `<text x="${xOf(d)}" y="${PT+cH+16}" font-size="10" fill="#9aa0b4" text-anchor="middle" font-family="DM Sans,sans-serif">${d}</text>`;
+  });
+
+  // Event dots with invisible hit areas for tooltip
+  finalDots.forEach(({x,y,col,ev}) => {
+    const tipId = `tip-${ev.entryId}`;
+    const amtStr = ev.amount >= 0 ? `+${fmt(ev.amount)}` : fmt(ev.amount);
+    svg += `<circle cx="${x}" cy="${y}" r="4" fill="${col}" stroke="white" stroke-width="1.5" clip-path="url(#cfClip)"
+      onmouseenter="showChartTip(event,'${ev.label.replace(/'/g,"\\'")}','${amtStr}','${fmt(ev.balance)}')"
+      onmouseleave="hideChartTip()" style="cursor:pointer"/>`;
+  });
+
+  svg += `</svg>`;
+  return svg;
+}
+
+function showChartTip(e, label, amt, bal) {
+  const tip = document.getElementById('cf-tooltip');
+  if (!tip) return;
+  tip.innerHTML = `<b>${label}</b><br>${amt} &nbsp;→&nbsp; ${bal} balance`;
+  tip.style.opacity = '1';
+  moveTip(e);
+  document.getElementById('cf-chart').addEventListener('mousemove', moveTip);
+}
+function moveTip(e) {
+  const tip = document.getElementById('cf-tooltip');
+  if (!tip) return;
+  const wrap = document.getElementById('cf-wrap');
+  if (!wrap) return;
+  const r = wrap.getBoundingClientRect();
+  let lx = e.clientX - r.left + 12, ly = e.clientY - r.top - 40;
+  if (lx + 180 > r.width) lx = e.clientX - r.left - 160;
+  tip.style.left = lx + 'px';
+  tip.style.top  = ly + 'px';
+}
+function hideChartTip() {
+  const tip = document.getElementById('cf-tooltip');
+  if (tip) tip.style.opacity = '0';
+  const ch = document.getElementById('cf-chart');
+  if (ch) ch.removeEventListener('mousemove', moveTip);
+}
+
 function renderOverview(){
   const tl=buildTimeline();
   if(!tl.length)return`<div class="empty">No entries yet. Add a bank account and income to get started.</div>`;
-  const bals=tl.filter(e=>e.balance!==null).map(e=>e.balance);
+  const bals=tl.filter(e=>e.balance!==null&&!e.isPass).map(e=>e.balance);
   const endBal=bals.length?bals[bals.length-1]:0;
   const floor=bals.length?Math.min(...bals):0;
-  const floorEv=tl.find(e=>e.balance===floor);
+  const floorEv=tl.find(e=>e.balance===floor&&!e.isPass);
   const isDng=floor<500;
   const totalIn=tl.filter(e=>e.amount>0).reduce((s,e)=>s+e.amount,0);
   const totalOut=Math.abs(tl.filter(e=>e.amount<0&&!e.isPass).reduce((s,e)=>s+e.amount,0));
+
   let html=`<div class="stat-grid">
     <div class="stat-card"><div class="stat-card-label">End of Month</div><div class="stat-card-val">${fmt(endBal)}</div><div class="stat-card-sub">projected balance</div></div>
     <div class="stat-card income"><div class="stat-card-label">Total In</div><div class="stat-card-val">${fmt(totalIn)}</div><div class="stat-card-sub">this month</div></div>
     <div class="stat-card out"><div class="stat-card-label">Total Out</div><div class="stat-card-val">${fmt(totalOut)}</div><div class="stat-card-sub">bills &amp; cards</div></div>
-    <div class="stat-card floor${isDng?' danger':''}"><div class="stat-card-label">${isDng?'⚠ ':''}Floor</div><div class="stat-card-val">${fmt(floor)}</div><div class="stat-card-sub">${floorEv?floorEv.label:''}</div></div>
+    <div class="stat-card floor${isDng?' danger':''}"><div class="stat-card-label">${isDng?'⚠ ':''}Lowest Balance</div><div class="stat-card-val">${fmt(floor)}</div><div class="stat-card-sub">${floorEv?floorEv.label:''}</div></div>
   </div>`;
+
+  // Chart
+  const chartSvg = buildChartSVG(tl);
+  if (chartSvg) {
+    html += `<div class="chart-panel">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Budgeted Cash Flow — ${MONTHS[currentMonth]}</div>
+          <div class="chart-disclaimer">Based on fixed budgeted amounts. Actual spending will vary.</div>
+        </div>
+        <div class="chart-legend">
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#0f7a55"></div>Income</div>
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#1a56a5"></div>Card payment</div>
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#c0392b"></div>Bill</div>
+        </div>
+      </div>
+      <div class="chart-wrap chart-outer" id="cf-wrap">
+        ${chartSvg}
+        <div class="chart-tooltip" id="cf-tooltip"></div>
+      </div>
+    </div>`;
+  }
+
+  // Ledger
   html+=`<div class="panel"><div class="panel-header"><span class="panel-title">Cash Flow — ${MONTHS[currentMonth]}</span><span style="font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-300)">Amount &nbsp;·&nbsp; Balance</span></div>`;
   let lastDay=null;
   tl.forEach(ev=>{
