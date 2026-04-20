@@ -535,6 +535,25 @@ html,body{height:100%;font-family:var(--font);font-size:14px;background:var(--bg
     <input class="form-input" id="payment-day" type="number" inputmode="numeric" placeholder="1–31" min="1" max="31">
     <div class="form-hint">The day your card statement is due each month.</div>
   </div>
+  <div class="form-field" id="payment-field-paidby">
+    <div class="form-label">Card paid by</div>
+    <div style="display:flex;gap:10px;margin-top:2px">
+      <label style="flex:1;display:flex;align-items:center;gap:10px;padding:11px 14px;border:1.5px solid var(--ink-100);border-radius:8px;cursor:pointer;transition:border-color 0.15s" id="paidby-personal-label">
+        <input type="radio" name="card-paidby" id="paidby-personal" value="personal" checked onchange="onCardPaidByChange()" style="accent-color:var(--ink-900);width:16px;height:16px">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--ink-700)">My bank account</div>
+          <div style="font-size:11px;color:var(--ink-300);margin-top:1px">Affects your personal cash flow</div>
+        </div>
+      </label>
+      <label style="flex:1;display:flex;align-items:center;gap:10px;padding:11px 14px;border:1.5px solid var(--ink-100);border-radius:8px;cursor:pointer;transition:border-color 0.15s" id="paidby-other-label">
+        <input type="radio" name="card-paidby" id="paidby-other" value="other" onchange="onCardPaidByChange()" style="accent-color:var(--ink-900);width:16px;height:16px">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--ink-700)">Other (e.g. business)</div>
+          <div style="font-size:11px;color:var(--ink-300);margin-top:1px">Tracked for info — not deducted</div>
+        </div>
+      </label>
+    </div>
+  </div>
   <div class="form-field" id="payment-field-start" style="display:none">
     <div class="form-label">Current Balance ($)</div>
     <input class="form-input" id="payment-startbal" type="number" inputmode="decimal" placeholder="e.g. 3200.00" step="0.01" min="0">
@@ -644,23 +663,34 @@ function buildTimeline(){
     });
   });
 
-  // Each card: one real cash event on the due date, individual charges shown as informational pass rows
+  // Each card: one real cash event on the due date (only if paid by personal bank),
+  // plus informational pass rows for each individual charge regardless
   cards.forEach(card=>{
     const assigned=entries.filter(e=>(e.type==='bill'||e.type==='buffer')&&e.payment===String(card.id));
     const total=assigned.reduce((s,e)=>s+Math.abs(e.amount),0);
     if(!total) return;
-    // The single real deduction — hits cash on the card's due date
-    events.push({
-      day:parseInt(card.day)||1, label:card.label, type:'card',
-      amount:-total, entryId:card.id, isPass:false,
-      expandItems:assigned.map(a=>[a.label, fmt(a.amount)])
-    });
-    // Informational rows: show each charge on the day it posts, but marked isPass
-    // so they do NOT move the running balance
+    // Only hit personal cash if paidByOther is not set
+    if(!card.paidByOther){
+      events.push({
+        day:parseInt(card.day)||1, label:card.label, type:'card',
+        amount:-total, entryId:card.id, isPass:false,
+        expandItems:assigned.map(a=>[a.label, fmt(a.amount)])
+      });
+    } else {
+      // External card: show as a grouped info row but marked pass so no balance impact
+      events.push({
+        day:parseInt(card.day)||1, label:card.label, type:'card-ext',
+        amount:-total, entryId:card.id, isPass:true,
+        expandItems:assigned.map(a=>[a.label, fmt(a.amount)]),
+        isExternalCard:true
+      });
+    }
+    // Individual charge rows — always informational
     assigned.forEach(a=>events.push({
       day:parseInt(a.day)||1, label:a.label, type:'pass',
       amount:-Math.abs(a.amount), entryId:a.id, isPass:true,
-      via:card.label, isSub:a.isSub||false
+      via:card.label, isSub:a.isSub||false,
+      externalCard:card.paidByOther||false
     }));
   });
 
@@ -698,8 +728,8 @@ function updateHeader(){
   const mobPill=document.getElementById('mob-floor-pill');if(mobPill)mobPill.classList.toggle('danger',isDanger);
 }
 
-const TYPE_COLOR={income:'var(--green)',bill:'var(--red)',card:'var(--blue)',buffer:'var(--amber)',start:'var(--ink-500)',pass:'var(--ink-300)'};
-const TYPE_BAR={income:'#0f7a55',bill:'#c0392b',card:'#1a56a5',buffer:'#b07d1c',start:'#9aa0b4',pass:'transparent'};
+const TYPE_COLOR={income:'var(--green)',bill:'var(--red)',card:'var(--blue)','card-ext':'#6366f1',buffer:'var(--amber)',start:'var(--ink-500)',pass:'var(--ink-300)'};
+const TYPE_BAR={income:'#0f7a55',bill:'#c0392b',card:'#1a56a5','card-ext':'#a5b4fc',buffer:'#b07d1c',start:'#9aa0b4',pass:'transparent'};
 
 function buildChartSVG(tl) {
   // Collect one point per day-change in the timeline (non-pass only)
@@ -917,10 +947,16 @@ function renderOverview(){
 
     if(ev.isPass){
       const balDng=ev.balance!==null&&ev.balance<500;
-      html+=`<div class="ledger-row pass-row">
-        <div class="ledger-icon" style="color:var(--ink-300)">${iconFor(ev)}</div>
-        <div class="ledger-name" style="color:var(--ink-300)">${ev.label}${ev.via?`<span style="font-size:11px;font-weight:400"> via ${ev.via}</span>`:''}</div>
-        <div class="ledger-amount" style="color:var(--ink-300)">${fmt(ev.amount)}</div>
+      const isExt=ev.isExternalCard||ev.externalCard;
+      const extBadge=isExt?`<span class="badge" style="background:#ede9fe;color:#4338ca;font-size:9px">ext · not deducted</span>`:'';
+      const nameColor=isExt?'#4338ca':'var(--ink-400)';
+      const amtColor=isExt?'#6366f1':'var(--ink-300)';
+      const iconColor=isExt?'#6366f1':'var(--ink-300)';
+      const viaText=ev.via?`<span style="font-size:11px;font-weight:400;color:var(--ink-300)"> via ${ev.via}</span>`:'';
+      html+=`<div class="ledger-row pass-row" style="${isExt?'border-left:3px solid #a5b4fc;background:#f5f3ff':''}">
+        <div class="ledger-icon" style="color:${iconColor}">${iconFor(ev)}</div>
+        <div class="ledger-name" style="color:${nameColor};gap:6px">${ev.label}${viaText} ${extBadge}</div>
+        <div class="ledger-amount" style="color:${amtColor}">${fmt(ev.amount)}</div>
         <div class="ledger-balance ${balDng?'danger':'healthy'}" style="color:var(--ink-300)">${fmt(ev.balance)}</div>
       </div>`;
       return;
@@ -1041,7 +1077,7 @@ function renderSettings(){
   else{html+=`<div class="trow clickable" onclick="openPaymentSheet(null);setTimeout(()=>{document.getElementById('payment-kind').value='bankacct';onPaymentKindChange();},100)"><div class="trow-icon" style="color:var(--ink-300)">${I.bank}</div><div class="trow-main"><div class="trow-label" style="color:var(--ink-300)">Add bank account &amp; starting balance</div></div><div style="color:var(--ink-300);margin-left:auto">${I.plus}</div></div>`}
   html+=`</div><div class="panel"><div class="panel-header"><span class="panel-title">Credit Cards</span>${addBtn}</div>`;
   if(!cards.length){html+=`<div class="empty">No credit cards yet. Add one to start assigning bills.</div>`}
-  else{cards.forEach((card,ci)=>{const assigned=entries.filter(e=>(e.type==='bill'||e.type==='buffer')&&e.payment===String(card.id));const total=assigned.reduce((s,e)=>s+Math.abs(e.amount),0);const color=COLORS[ci%COLORS.length];html+=`<div class="trow clickable" onclick="openPaymentSheet(${card.id})"><div class="trow-bar" style="background:${color}"></div><div class="trow-icon" style="color:${color}">${I.card}</div><div class="trow-main"><div class="trow-label">${card.label}</div><div class="trow-sub">Due ${ordinal(card.day||1)} · ${assigned.length} bill${assigned.length!==1?'s':''} assigned</div></div><div class="trow-right"><div class="trow-amount" style="color:${color}">${fmt(total)}</div><div class="trow-balance">projected</div></div></div>`})}
+  else{cards.forEach((card,ci)=>{const assigned=entries.filter(e=>(e.type==='bill'||e.type==='buffer')&&e.payment===String(card.id));const total=assigned.reduce((s,e)=>s+Math.abs(e.amount),0);const color=COLORS[ci%COLORS.length];const extBadge=card.paidByOther?`<span class="badge" style="background:#ede9fe;color:#4338ca;margin-left:4px">ext</span>`:'';html+=`<div class="trow clickable" onclick="openPaymentSheet(${card.id})"><div class="trow-bar" style="background:${color}"></div><div class="trow-icon" style="color:${color}">${I.card}</div><div class="trow-main"><div class="trow-label">${card.label}${extBadge}</div><div class="trow-sub">${card.paidByOther?'Paid externally':'Due '+ordinal(card.day||1)} · ${assigned.length} bill${assigned.length!==1?'s':''} assigned</div></div><div class="trow-right"><div class="trow-amount" style="color:${card.paidByOther?'var(--ink-300)':color}">${card.paidByOther?'not deducted':fmt(total)}</div><div class="trow-balance">${card.paidByOther?'external':'projected'}</div></div></div>`})}
   html+=`</div>`;return html;
 }
 
@@ -1091,9 +1127,38 @@ async function saveBill(){const kind=document.getElementById('bill-kind').value;
 function openIncomeSheet(id){editingId=id||null;editingType='income';const e=id?entries.find(x=>x.id===id):null;document.getElementById('income-title').textContent=e?'Edit Income':'Add Income';document.getElementById('income-label').value=e?e.label:'';document.getElementById('income-amount').value=e?e.amount:'';document.getElementById('income-day').value=e?(e.day||''):'';document.getElementById('income-btn-delete').style.display=e?'':'none';openSheet('sheet-income');setTimeout(()=>document.getElementById('income-label').focus(),300)}
 async function saveIncome(){const label=document.getElementById('income-label').value.trim();const amount=parseFloat(document.getElementById('income-amount').value);const day=parseInt(document.getElementById('income-day').value)||1;if(!label){showToast('Please enter a label');return}if(isNaN(amount)||amount<=0){showToast('Please enter a valid amount');return}const entry={type:'income',label,amount,day};if(editingId)entry.id=editingId;await dbPut('entries',entry);entries=await dbGetAll('entries');closeAllSheets();render();markDirty();showToast(editingId?'Updated':'Income saved')}
 
-function openPaymentSheet(id){editingId=id||null;editingType='payment';const e=id?entries.find(x=>x.id===id):null;const isBank=e?e.type==='start':false;document.getElementById('payment-title').textContent=e?'Edit Payment Method':'Add Payment Method';document.getElementById('payment-kind').value=isBank?'bankacct':'card';document.getElementById('payment-label').value=e?(isBank?'Checking Account':e.label):'';document.getElementById('payment-day').value=e&&!isBank?(e.day||''):'';document.getElementById('payment-startbal').value=e&&isBank?e.amount:'';document.getElementById('payment-btn-delete').style.display=e?'':'none';if(isBank){document.getElementById('payment-label').value='Checking Account';document.getElementById('payment-label').placeholder='e.g. Checking, Savings'}onPaymentKindChange();openSheet('sheet-payment');setTimeout(()=>document.getElementById('payment-label').focus(),300)}
-function onPaymentKindChange(){const k=document.getElementById('payment-kind').value;document.getElementById('payment-field-due').style.display=k==='card'?'':'none';document.getElementById('payment-field-start').style.display=k==='bankacct'?'':'none'}
-async function savePaymentMethod(){const kind=document.getElementById('payment-kind').value;const label=document.getElementById('payment-label').value.trim();if(!label){showToast('Please enter a name');return}if(kind==='card'){const day=parseInt(document.getElementById('payment-day').value)||1;const entry={type:'card',label,amount:0,day};if(editingId)entry.id=editingId;await dbPut('entries',entry)}else{const bal=parseFloat(document.getElementById('payment-startbal').value);if(isNaN(bal)||bal<0){showToast('Please enter your current balance');return}const existing=entries.find(e=>e.type==='start');if(existing&&!editingId)await dbDelete('entries',existing.id);const entry={type:'start',label:'Starting Balance',amount:bal,day:1};if(editingId)entry.id=editingId;await dbPut('entries',entry)}entries=await dbGetAll('entries');closeAllSheets();render();markDirty();showToast('Saved')}
+function openPaymentSheet(id){
+  editingId=id||null;editingType='payment';
+  const e=id?entries.find(x=>x.id===id):null;
+  const isBank=e?e.type==='start':false;
+  document.getElementById('payment-title').textContent=e?'Edit Payment Method':'Add Payment Method';
+  document.getElementById('payment-kind').value=isBank?'bankacct':'card';
+  document.getElementById('payment-label').value=e?(isBank?'Checking Account':e.label):'';
+  document.getElementById('payment-day').value=e&&!isBank?(e.day||''):'';
+  document.getElementById('payment-startbal').value=e&&isBank?e.amount:'';
+  document.getElementById('payment-btn-delete').style.display=e?'':'none';
+  if(isBank){document.getElementById('payment-label').value='Checking Account';document.getElementById('payment-label').placeholder='e.g. Checking, Savings'}
+  // Restore paid-by radio
+  const paidByOther=e&&!isBank&&(e.paidByOther===true);
+  document.getElementById('paidby-personal').checked=!paidByOther;
+  document.getElementById('paidby-other').checked=paidByOther;
+  onCardPaidByChange();
+  onPaymentKindChange();
+  openSheet('sheet-payment');
+  setTimeout(()=>document.getElementById('payment-label').focus(),300);
+}
+function onPaymentKindChange(){
+  const k=document.getElementById('payment-kind').value;
+  document.getElementById('payment-field-due').style.display=k==='card'?'':'none';
+  document.getElementById('payment-field-paidby').style.display=k==='card'?'':'none';
+  document.getElementById('payment-field-start').style.display=k==='bankacct'?'':'none';
+}
+function onCardPaidByChange(){
+  const isOther=document.getElementById('paidby-other').checked;
+  document.getElementById('paidby-personal-label').style.borderColor=!isOther?'var(--ink-700)':'var(--ink-100)';
+  document.getElementById('paidby-other-label').style.borderColor=isOther?'var(--ink-700)':'var(--ink-100)';
+}
+async function savePaymentMethod(){const kind=document.getElementById('payment-kind').value;const label=document.getElementById('payment-label').value.trim();if(!label){showToast('Please enter a name');return}if(kind==='card'){const day=parseInt(document.getElementById('payment-day').value)||1;const paidByOther=document.getElementById('paidby-other').checked;const entry={type:'card',label,amount:0,day,paidByOther};if(editingId)entry.id=editingId;await dbPut('entries',entry)}else{const bal=parseFloat(document.getElementById('payment-startbal').value);if(isNaN(bal)||bal<0){showToast('Please enter your current balance');return}const existing=entries.find(e=>e.type==='start');if(existing&&!editingId)await dbDelete('entries',existing.id);const entry={type:'start',label:'Starting Balance',amount:bal,day:1};if(editingId)entry.id=editingId;await dbPut('entries',entry)}entries=await dbGetAll('entries');closeAllSheets();render();markDirty();showToast('Saved')}
 
 async function deleteCurrent(){if(!editingId)return;const entry=entries.find(e=>e.id===editingId);if(!entry)return;if(entry.type==='card'){const assigned=entries.filter(e=>e.payment===String(editingId));if(assigned.length){showToast(`Reassign ${assigned.length} bill(s) first`);return}}if(!confirm(`Delete "${entry.label}"?`))return;await dbDelete('entries',editingId);entries=await dbGetAll('entries');closeAllSheets();render();markDirty();showToast('Deleted')}
 
