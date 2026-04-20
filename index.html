@@ -159,20 +159,52 @@ html,body{height:100%;font-family:var(--font);font-size:14px;background:var(--bg
 .panel-section-line{flex:1;height:1px;background:var(--ink-100)}
 
 /* ── Transaction row ── */
-.trow{display:flex;align-items:center;gap:12px;padding:11px 18px;position:relative;border-bottom:1px solid var(--ink-50)}
+.trow{display:flex;align-items:center;gap:14px;padding:13px 20px;position:relative;border-bottom:1px solid var(--ink-50)}
 .trow:last-child{border-bottom:none}
 .trow.clickable{cursor:pointer}
 .trow.clickable:hover{background:var(--ink-50)}
-.trow.pass{opacity:0.6;padding-left:34px;background:var(--ink-50)}
-.trow-bar{width:3px;height:28px;border-radius:2px;flex-shrink:0}
-.trow-icon{flex-shrink:0;width:18px;display:flex;align-items:center;justify-content:center}
-.trow-label{font-size:13.5px;font-weight:500;color:var(--ink-700);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.trow-sub{font-size:11px;color:var(--ink-300);margin-top:1px}
+.trow.pass{opacity:0.6;padding-left:44px;background:var(--ink-50)}
+.trow-bar{width:3px;height:32px;border-radius:2px;flex-shrink:0}
+.trow-icon{flex-shrink:0;width:22px;display:flex;align-items:center;justify-content:center}
+.trow-label{font-size:14px;font-weight:500;color:var(--ink-700);display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.trow-sub{font-size:12px;color:var(--ink-300);margin-top:2px}
 .trow-main{flex:1;min-width:0}
 .trow-right{text-align:right;margin-left:auto;flex-shrink:0}
-.trow-amount{font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-0.1px}
-.trow-balance{font-size:11.5px;color:var(--ink-300);font-variant-numeric:tabular-nums;margin-top:2px;font-weight:400}
-.trow-balance.danger{color:var(--red);font-weight:600;background:var(--red-l);padding:1px 5px;border-radius:4px}
+.trow-amount{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-0.1px}
+.trow-balance{font-size:12px;color:var(--ink-300);font-variant-numeric:tabular-nums;margin-top:3px;font-weight:400}
+.trow-balance.danger{color:var(--red);font-weight:600;background:var(--red-l);padding:2px 6px;border-radius:4px}
+
+/* ── Bills table layout ── */
+.bills-table-header{display:grid;grid-template-columns:24px 1fr 110px 90px 110px;gap:0;align-items:center;padding:9px 20px;border-bottom:1px solid var(--ink-100);background:var(--ink-50)}
+.bills-col-label{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-300)}
+.bills-col-label.right{text-align:right}
+.bills-col-label.center{text-align:center}
+.trow-bill{display:grid;grid-template-columns:24px 1fr 110px 90px 110px;gap:0;align-items:center;padding:13px 20px;border-bottom:1px solid var(--ink-50);cursor:pointer;transition:background 0.12s}
+.trow-bill:last-child{border-bottom:none}
+.trow-bill:hover{background:var(--ink-50)}
+.trow-bill-icon{display:flex;align-items:center;justify-content:center;width:22px}
+.trow-bill-name{display:flex;align-items:center;gap:8px;padding-left:14px;font-size:14px;font-weight:500;color:var(--ink-700)}
+.trow-bill-date{font-size:13px;font-variant-numeric:tabular-nums;color:var(--ink-500);font-weight:500}
+.trow-bill-tags{display:flex;align-items:center;gap:5px}
+.trow-bill-amount{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+
+/* ── Overview ledger table ── */
+.ledger-header{display:grid;grid-template-columns:3px 28px 1fr 140px 140px 16px;gap:0;align-items:center;padding:9px 20px;border-bottom:1px solid var(--ink-100);background:var(--ink-50)}
+.ledger-row{display:grid;grid-template-columns:3px 28px 1fr 140px 140px 16px;gap:0;align-items:center;padding:13px 20px;border-bottom:1px solid var(--ink-50);transition:background 0.12s}
+.ledger-row:last-child{border-bottom:none}
+.ledger-row.clickable{cursor:pointer}
+.ledger-row.clickable:hover{background:var(--ink-50)}
+.ledger-row.pass-row{background:var(--ink-50);opacity:0.65;padding-left:54px;grid-template-columns:28px 1fr 140px 140px}
+.ledger-col-label{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-300)}
+.ledger-col-label.right{text-align:right}
+.ledger-bar{width:3px;height:34px;border-radius:2px}
+.ledger-icon{display:flex;align-items:center;justify-content:center;padding:0 6px}
+.ledger-name{padding:0 8px;font-size:14px;font-weight:500;color:var(--ink-700);display:flex;align-items:center;gap:8px;min-width:0}
+.ledger-amount{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;text-align:right;padding-right:16px}
+.ledger-balance{font-size:14px;font-weight:500;font-variant-numeric:tabular-nums;text-align:right;padding-right:4px}
+.ledger-balance.danger{color:var(--red);font-weight:700}
+.ledger-balance.healthy{color:var(--ink-700)}
+.ledger-chevron{display:flex;align-items:center;justify-content:center;color:var(--ink-300)}
 .trow-expand-icon{color:var(--ink-300);flex-shrink:0;margin-left:4px}
 
 /* ── Expand panel ── */
@@ -292,24 +324,24 @@ html,body{height:100%;font-family:var(--font);font-size:14px;background:var(--bg
     <div class="sidebar-month" id="sb-month">—</div>
     <nav class="sidebar-nav">
       <button class="nav-item active" data-dtab="overview" onclick="switchDTab('overview')">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
         Overview
       </button>
       <button class="nav-item" data-dtab="bills" onclick="switchDTab('bills')">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         Bills &amp; Subscriptions
       </button>
       <button class="nav-item" data-dtab="cards" onclick="switchDTab('cards')">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
         Credit Cards
       </button>
       <button class="nav-item" data-dtab="income" onclick="switchDTab('income')">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
         Income
       </button>
       <div class="nav-divider"></div>
       <button class="nav-item" data-dtab="settings" onclick="switchDTab('settings')">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         Accounts
       </button>
     </nav>
@@ -568,18 +600,18 @@ let entries=[],currentTab='overview',expandedId=null,currentMonth=new Date().get
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 const I={
-  bank:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M8 10v11M12 10v11M16 10v11M20 10v11"/></svg>`,
-  pay:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>`,
-  home:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>`,
-  card:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>`,
-  bolt:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
-  wifi:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/></svg>`,
-  car:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1l3-4h8l3 4h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2"/><circle cx="7.5" cy="17" r="2.5"/><circle cx="16.5" cy="17" r="2.5"/></svg>`,
-  music:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`,
-  tv:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>`,
-  food:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>`,
-  gym:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/><path d="M3 9.5v5"/><path d="M21 9.5v5"/><path d="M6.5 6.5v11"/><path d="M17.5 6.5v11"/></svg>`,
-  bill:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
+  bank:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M8 10v11M12 10v11M16 10v11M20 10v11"/></svg>`,
+  pay:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>`,
+  home:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>`,
+  card:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>`,
+  bolt:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
+  wifi:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/></svg>`,
+  car:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1l3-4h8l3 4h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2"/><circle cx="7.5" cy="17" r="2.5"/><circle cx="16.5" cy="17" r="2.5"/></svg>`,
+  music:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`,
+  tv:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>`,
+  food:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>`,
+  gym:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/><path d="M3 9.5v5"/><path d="M21 9.5v5"/><path d="M6.5 6.5v11"/><path d="M17.5 6.5v11"/></svg>`,
+  bill:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
   chevD:`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`,
   chevU:`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>`,
   lock:`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
@@ -864,8 +896,17 @@ function renderOverview(){
     </div>`;
   }
 
-  // Ledger
-  html+=`<div class="panel"><div class="panel-header"><span class="panel-title">Cash Flow — ${MONTHS[currentMonth]}</span><span style="font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-300)">Amount &nbsp;·&nbsp; Balance</span></div>`;
+  // Ledger with proper columns
+  const ledgerHdr=`<div class="ledger-header">
+    <div></div>
+    <div></div>
+    <div class="ledger-col-label" style="padding-left:8px">Description</div>
+    <div class="ledger-col-label right">Amount</div>
+    <div class="ledger-col-label right">Cash on Hand</div>
+    <div></div>
+  </div>`;
+  html+=`<div class="panel"><div class="panel-header"><span class="panel-title">Cash Flow — ${MONTHS[currentMonth]}</span></div>${ledgerHdr}`;
+
   let lastDay=null;
   tl.forEach(ev=>{
     if(!ev.isPass&&ev.day!==lastDay){
@@ -873,11 +914,18 @@ function renderOverview(){
       html+=`<div class="panel-section"><span class="panel-section-title">${label}</span><div class="panel-section-line"></div></div>`;
       lastDay=ev.day;
     }
+
     if(ev.isPass){
       const balDng=ev.balance!==null&&ev.balance<500;
-      html+=`<div class="trow pass"><div class="trow-icon" style="color:var(--ink-300)">${iconFor(ev)}</div><div class="trow-main"><div class="trow-label">${ev.label}${ev.via?`<span style="color:var(--ink-300);font-weight:400;font-size:11px"> via ${ev.via}</span>`:''}</div></div><div class="trow-right"><div class="trow-amount" style="color:var(--ink-300)">${fmt(ev.amount)}</div><div class="trow-balance${balDng?' danger':''}">${fmt(ev.balance)}</div></div></div>`;
+      html+=`<div class="ledger-row pass-row">
+        <div class="ledger-icon" style="color:var(--ink-300)">${iconFor(ev)}</div>
+        <div class="ledger-name" style="color:var(--ink-300)">${ev.label}${ev.via?`<span style="font-size:11px;font-weight:400"> via ${ev.via}</span>`:''}</div>
+        <div class="ledger-amount" style="color:var(--ink-300)">${fmt(ev.amount)}</div>
+        <div class="ledger-balance ${balDng?'danger':'healthy'}" style="color:var(--ink-300)">${fmt(ev.balance)}</div>
+      </div>`;
       return;
     }
+
     const isExp=expandedId===ev.entryId;
     const hasDetail=ev.expandItems&&ev.expandItems.length;
     const isStart=ev.type==='start';
@@ -886,17 +934,24 @@ function renderOverview(){
     const amtStr=(ev.type==='income'||ev.type==='start')?fmt(ev.amount,true):fmt(ev.amount);
     const balDng=ev.balance!==null&&ev.balance<500;
     const reqBadge=ev.required?`<span class="badge badge-req">${I.lock} req</span>`:'';
-    html+=`<div class="trow clickable" onclick="${hasDetail?`toggleExpand('${ev.entryId}')`:isStart?`openPaymentSheet(${typeof ev.entryId==='number'?ev.entryId:'null'})`:` openBillSheet(${ev.entryId})`}">
-      <div class="trow-bar" style="background:${bar}"></div>
-      <div class="trow-icon" style="color:${color}">${iconFor(ev)}</div>
-      <div class="trow-main"><div class="trow-label">${ev.label} ${reqBadge}</div></div>
-      <div class="trow-right">
-        <div class="trow-amount" style="color:${color}">${amtStr}</div>
-        ${ev.balance!==null?`<div class="trow-balance${balDng?' danger':''}">${fmt(ev.balance)}</div>`:''}
-      </div>
-      ${hasDetail?`<div class="trow-expand-icon">${isExp?I.chevU:I.chevD}</div>`:''}
+    const onclick=hasDetail?`toggleExpand('${ev.entryId}')`:isStart?`openPaymentSheet(${typeof ev.entryId==='number'?ev.entryId:'null'})`:`openBillSheet(${ev.entryId})`;
+
+    html+=`<div class="ledger-row clickable" onclick="${onclick}">
+      <div class="ledger-bar" style="background:${bar}"></div>
+      <div class="ledger-icon" style="color:${color}">${iconFor(ev)}</div>
+      <div class="ledger-name">${ev.label} ${reqBadge}${ev.type==='card'?`<span style="font-size:11px;color:var(--ink-300);font-weight:400">card payment</span>`:''}</div>
+      <div class="ledger-amount" style="color:${color}">${amtStr}</div>
+      <div class="ledger-balance ${balDng?'danger':'healthy'}">${ev.balance!==null?fmt(ev.balance):'—'}</div>
+      <div class="ledger-chevron">${hasDetail?(isExp?I.chevU:I.chevD):''}</div>
     </div>`;
-    if(hasDetail){html+=`<div class="expand-panel${isExp?' open':''}" id="ep-${ev.entryId}">`;ev.expandItems.forEach(([name,amt])=>{html+=`<div class="expand-row"><span>${name}</span><span>${amt}</span></div>`});html+=`</div>`}
+
+    if(hasDetail){
+      html+=`<div class="expand-panel${isExp?' open':''}" id="ep-${ev.entryId}">`;
+      ev.expandItems.forEach(([name,amt])=>{
+        html+=`<div class="expand-row"><span>${name}</span><span>${amt}</span></div>`;
+      });
+      html+=`</div>`;
+    }
   });
   html+=`</div>`;return html;
 }
@@ -906,21 +961,52 @@ function renderBills(){
   const cards=entries.filter(e=>e.type==='card');
   const addBtn=`<button class="panel-action" onclick="openBillSheet(null)">${I.plus} Add Bill</button>`;
   if(!bills.length)return`<div class="panel"><div class="panel-header"><span class="panel-title">Bills &amp; Subscriptions</span>${addBtn}</div><div class="empty">No bills yet. Click Add Bill to get started.</div></div>`;
+
+  const tableHeader=`<div class="bills-table-header">
+    <div></div>
+    <div class="bills-col-label" style="padding-left:14px">Name</div>
+    <div class="bills-col-label">Tags</div>
+    <div class="bills-col-label center">Due</div>
+    <div class="bills-col-label right">Amount</div>
+  </div>`;
+
   let html='';
   const direct=bills.filter(e=>e.payment==='bank'||!e.payment);
-  if(direct.length){html+=`<div class="panel"><div class="panel-header"><span class="panel-title">Direct to Bank</span>${addBtn}</div>`;direct.forEach(b=>html+=billRow(b));html+=`</div>`;}
-  else{html+=`<div style="display:flex;justify-content:flex-end;margin-bottom:14px">${addBtn}</div>`}
-  cards.forEach(card=>{const assigned=bills.filter(e=>e.payment===String(card.id));if(!assigned.length)return;html+=`<div class="panel"><div class="panel-header"><span class="panel-title">${card.label}</span></div>`;assigned.forEach(b=>html+=billRow(b));html+=`</div>`});
+  if(direct.length){
+    html+=`<div class="panel"><div class="panel-header"><span class="panel-title">Direct to Bank</span>${addBtn}</div>${tableHeader}`;
+    direct.forEach(b=>html+=billRow(b));
+    html+=`</div>`;
+  } else {
+    html+=`<div style="display:flex;justify-content:flex-end;margin-bottom:14px">${addBtn}</div>`;
+  }
+
+  cards.forEach(card=>{
+    const assigned=bills.filter(e=>e.payment===String(card.id));
+    if(!assigned.length)return;
+    html+=`<div class="panel"><div class="panel-header"><span class="panel-title">${card.label}</span></div>${tableHeader}`;
+    assigned.forEach(b=>html+=billRow(b));
+    html+=`</div>`;
+  });
+
   const total=bills.reduce((s,b)=>s+Math.abs(b.amount),0);
   html+=`<div class="panel"><div class="panel-footer"><span class="panel-footer-label">Monthly Total</span><span class="panel-footer-val">${fmt(total)}</span></div></div>`;
   return html;
 }
+
 function billRow(b){
-  const color=b.isSub?'var(--indigo)':'var(--red)';
-  const bar=b.isSub?'#3730a3':'#c0392b';
+  const isBuffer=b.type==='buffer';
+  const color=b.isSub?'var(--indigo)':isBuffer?'var(--amber)':'var(--red)';
+  const bar=b.isSub?'#3730a3':isBuffer?'#b07d1c':'#c0392b';
   const sub=b.isSub?`<span class="badge badge-sub">sub</span>`:'';
+  const buf=isBuffer?`<span class="badge" style="background:var(--amber-l);color:var(--amber)">est</span>`:'';
   const req=b.required?`<span class="badge badge-req">${I.lock} req</span>`:'';
-  return`<div class="trow clickable" onclick="openBillSheet(${b.id})"><div class="trow-bar" style="background:${bar}"></div><div class="trow-icon" style="color:${color}">${iconFor(b)}</div><div class="trow-main"><div class="trow-label">${b.label} ${sub} ${req}</div><div class="trow-sub">Due ${ordinal(b.day||1)}</div></div><div class="trow-right"><div class="trow-amount" style="color:${color}">${fmt(b.amount)}</div></div></div>`;
+  return`<div class="trow-bill" onclick="openBillSheet(${b.id})" style="border-left:3px solid ${bar}">
+    <div class="trow-bill-icon" style="color:${color}">${iconFor(b)}</div>
+    <div class="trow-bill-name">${b.label}</div>
+    <div class="trow-bill-tags">${sub}${buf}${req}</div>
+    <div class="trow-bill-date" style="text-align:center">${ordinal(b.day||1)}</div>
+    <div class="trow-bill-amount" style="color:${color}">${fmt(b.amount)}</div>
+  </div>`;
 }
 
 function renderCards(){
@@ -1015,7 +1101,7 @@ function showOnboarding(){
   const ca=document.getElementById('content-area');
   if(!ca)return;
   ca.innerHTML=`<div class="onboarding-card">
-    <div class="onboarding-icon">${I.bank.replace('width="15" height="15"','width="26" height="26"').replace('stroke="currentColor"','stroke="#0f7a55"')}</div>
+    <div class="onboarding-icon">${I.bank.replace('width="18" height="18"','width="26" height="26"').replace('stroke="currentColor"','stroke="#0f7a55"')}</div>
     <div class="onboarding-title">Welcome to Flowr</div>
     <div class="onboarding-desc">Your personal cash flow tracker. See exactly when money comes in and goes out — so you're never caught off guard.</div>
     <div class="onboarding-steps">
